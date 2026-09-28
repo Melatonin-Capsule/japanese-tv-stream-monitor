@@ -1,6 +1,9 @@
 (() => {
   'use strict';
-  const ROTATION_SECONDS = 15;
+  const configuredRotation = Number(window.LCARS_CONFIG?.PAGE_ROTATION_SECONDS);
+  const ROTATION_SECONDS = Number.isFinite(configuredRotation) && configuredRotation >= 5
+    ? configuredRotation
+    : 15;
   const pages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
   let activeIndex = 0;
   let secondsLeft = ROTATION_SECONDS;

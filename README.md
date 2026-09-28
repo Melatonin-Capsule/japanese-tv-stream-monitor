@@ -35,7 +35,9 @@ sudo systemctl start lcars-kiosk
 journalctl -u lcars-backend -u lcars-kiosk -f
 ```
 
-`lcars-backend` 以无登录 shell 的 `lcars` 用户运行，失败后 10 秒重试。`lcars-kiosk` 的 Xorg 必须打开 VT7，因此 unit 由 root 启动；实际 Openbox、Epiphany 和浏览器子进程仍以 `lcars` 运行。kiosk 异常退出后 15 秒重试。
+`lcars-backend` 以无登录 shell 的 `lcars` 用户运行，失败后 10 秒重试。`lcars-kiosk` 的 Xorg 必须打开 VT7，因此 unit 由 root 启动；实际 Openbox、Luakit 和浏览器子进程仍以 `lcars` 运行。kiosk 异常退出后 15 秒重试。
+
+轮播时间在 `frontend/config.js` 中通过 `PAGE_ROTATION_SECONDS` 配置，默认值为 `15`；四页完整循环默认 60 秒。修改后刷新 kiosk（`sudo systemctl restart lcars-kiosk`）即可生效。
 
 开机自启已启用：
 
