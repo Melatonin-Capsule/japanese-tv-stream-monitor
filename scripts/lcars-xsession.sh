@@ -6,8 +6,9 @@ xset -dpms
 xset s noblank
 openbox &
 unclutter -idle 0.2 -root &
-# Web application mode removes Epiphany's browser toolbar and navigation UI.
-dbus-run-session -- epiphany --application-mode http://127.0.0.1:8765 &
+# Web application mode removes Epiphany's address bar and browser controls.
+# This Epiphany version requires an explicit, existing profile for that mode.
+dbus-run-session -- epiphany --application-mode --profile=/var/lib/lcars-monitor/epiphany-profile http://127.0.0.1:8765 &
 browser_pid=$!
 # Epiphany creates its window before it is ready to receive keyboard input.
 # Let it finish mapping, then toggle its own kiosk fullscreen mode.
