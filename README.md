@@ -1,103 +1,157 @@
 # STAR TREK LCARS SERVER MONITOR
 
-`tvserver` 的本地 HDMI 服务器状态显示。界面固定轮播四页：SYSTEM、MIRAKURUN、EPGSTATION、JELLYFIN；默认每页 15 秒、完整周期 60 秒。
+[中文](#中文) · [日本語](#日本語) · [English](#english)
 
-本系统只读监控。它不连接 Docker Socket，不读取或控制 Threadfin，不创建/取消 EPGStation 预约，也不控制 Mirakurun、Jellyfin 或录制。
+![LCARS monitor example](assets/lcars-monitor-example.png)
 
-## 架构
+> Illustration only. The image contains fictional, non-sensitive values rather than a capture from a real server.
+
+A lightweight, local-only server monitor with a Star Trek LCARS-inspired interface. It is intended for a small HDMI display attached to a media/TV server and deliberately remains read-only.
+
+## 中文
+
+### 项目简介
+
+**STAR TREK LCARS SERVER MONITOR** 是为 Ubuntu 媒体/电视服务器设计的本地状态显示系统。它在小尺寸 HDMI 显示器上以无浏览器边框的全屏 kiosk 方式长期运行，快速展示服务状态，而不充当服务器管理后台。
+
+界面按固定顺序自动轮播：
 
 ```text
-7-inch HDMI → Xorg / Openbox → Luakit fullscreen kiosk → LCARS SPA
-                                                   ↓ localhost:8765
-                                              Python backend
-                              SYSTEM / Mirakurun / EPGStation / Jellyfin
+SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-后端仅监听 `127.0.0.1:8765`。Jellyfin Key 只由 systemd credential 提供给低权限后端；不会进入浏览器、Git、HTML、JavaScript 或日志。
+默认每页显示 15 秒、完整循环 60 秒。可在 `frontend/config.js` 通过 `PAGE_ROTATION_SECONDS` 调整停留时间。
 
-## 目录
+### 功能
+
+- **SYSTEM**：主机名、LAN IP、内核、运行时间、CPU/各核心负载、温度、内存、根目录和录制盘空间、网络实时流量，以及 Jellyfin 当前播放摘要。
+- **MIRAKURUN**：版本、流资源统计、动态 tuner 列表、GR/BS/CS 类型、真实占用状态与当前频道。支持 Mirakurun 4.x 的 `isUsing`/`users` 字段，可正确显示直播和 EPG 抓取造成的占用。
+- **EPGSTATION**：当前录制、下一条预约、录制盘使用率与可用容量。
+- **JELLYFIN**：活动播放会话、用户/设备/客户端、媒体或频道名称、可用时的播放进度及节目图片。
+- **自动全屏启动**：systemd 在开机后启动本地后端及 Xorg/Openbox/Luakit kiosk，不显示地址栏、标签栏或窗口边框。
+- **安全降级**：上游服务无法访问时仅显示 `UNAVAILABLE`，不会修改、重启或控制任何电视服务。
+
+### 架构与安全边界
 
 ```text
-/opt/lcars-monitor/              application and Git repository
-/etc/lcars-monitor/jellyfin.env  root-only Jellyfin credential (0600)
-/etc/systemd/system/lcars-*.service
-/var/lib/lcars-monitor/          unprivileged browser profile
+HDMI display
+  └─ Xorg / Openbox / Luakit fullscreen kiosk
+       └─ LCARS single-page interface
+            └─ localhost:8765 Python read-only API
+                 ├─ Linux /proc, /sys and filesystem metrics
+                 ├─ Mirakurun API (localhost:40772)
+                 ├─ EPGStation API (localhost:8888)
+                 └─ Jellyfin API (localhost:8096)
 ```
 
-## 服务与日常操作
+这是一个**只读显示系统**：后端只监听 `127.0.0.1:8765`；不连接 Docker Socket、不管理容器、不读取或控制 Threadfin；不创建/取消 EPGStation 预约，也不控制 Mirakurun、Jellyfin、录制或播放。后端使用无登录权限的 `lcars` 用户和 systemd 沙箱。Jellyfin API Key 由仓库外的 root-only 文件以 systemd credential 方式提供，绝不进入 Git、前端或日志。
+
+### 环境要求、配置与操作
+
+需要 Ubuntu Server（或兼容的 systemd Linux）、HDMI 输出、Python 3、Xorg、Openbox、Luakit、`xdotool`、`unclutter`。可选的 Mirakurun、EPGStation、Jellyfin 默认运行在本机端口 40772、8888、8096；Mirakurun 4.x 已支持，其他版本请先检查 `/api/tuners` 的返回结构。
+
+应用目录为 `/opt/lcars-monitor`。请参考 `config/lcars-monitor.example.env`，在仓库**外部**创建 `/etc/lcars-monitor/jellyfin.env`，权限设为 `0600`：
+
+```text
+JELLYFIN_API_KEY=replace-with-a-restricted-jellyfin-api-key
+```
 
 ```bash
 sudo systemctl status lcars-backend lcars-kiosk
 sudo systemctl restart lcars-backend
 sudo systemctl restart lcars-kiosk
-sudo systemctl stop lcars-kiosk
-sudo systemctl start lcars-kiosk
+journalctl -u lcars-backend -u lcars-kiosk -f
+curl http://127.0.0.1:8765/api/status
+```
+
+kiosk 会话会禁用 screensaver 与 DPMS，但不会控制显示器的物理背光开关。物理关屏期间后端仍继续运行；重新开屏后若没有恢复图像，只需执行 `sudo systemctl restart lcars-kiosk`。部署或卸载时，请勿删除 Docker、Threadfin、Mirakurun、EPGStation、Jellyfin、录制盘或媒体数据。
+
+## 日本語
+
+### 概要
+
+**STAR TREK LCARS SERVER MONITOR** は、Ubuntu のテレビ・メディアサーバーに接続した小型 HDMI ディスプレイ向けのローカル専用ステータスモニターです。LCARS をイメージした画面を、ブラウザーの UI を表示しない全画面 kiosk として常時表示します。
+
+`SYSTEM`、`MIRAKURUN`、`EPGSTATION`、`JELLYFIN` の 4 ページを固定順で循環します。標準設定は 1 ページ 15 秒、1 周 60 秒で、`frontend/config.js` の `PAGE_ROTATION_SECONDS` から変更できます。
+
+### 機能
+
+- **SYSTEM**：ホスト情報、LAN IP、カーネル、稼働時間、CPU、温度、メモリー、ストレージ、ネットワーク速度、Jellyfin 再生概要。
+- **MIRAKURUN**：バージョン、ストリーム資源、GR/BS/CS チューナー、利用状態、受信チャンネル。Mirakurun 4.x の `isUsing` と `users` を解釈し、ライブ視聴と EPG 取得の実際の占有を表示します。
+- **EPGSTATION**：録画中、次の予約、録画用ストレージ。
+- **JELLYFIN**：再生中セッション、ユーザー/デバイス/クライアント、番組名、再生進捗、利用可能な画像。
+- **自動起動**：systemd がローカル API と Xorg/Openbox/Luakit の全画面 kiosk を起動します。
+- **安全な障害表示**：サービス障害時は `UNAVAILABLE` と表示するだけで、既存サービスを操作しません。
+
+### セキュリティと運用
+
+このソフトウェアは**監視表示専用**です。API は `127.0.0.1:8765` のみで待ち受け、Docker Socket、Threadfin、録画予約、Mirakurun のチューナー制御、Jellyfin の再生制御にはアクセスしません。Jellyfin API Key は Git 管理外の root 専用ファイルから systemd credential として読み込まれ、リポジトリー、ブラウザー、ログには含まれません。
+
+systemd を備えた Ubuntu Server、HDMI 出力、Python 3、Xorg、Openbox、Luakit、`xdotool`、`unclutter` を想定します。`config/lcars-monitor.example.env` を参照し、Key は `/etc/lcars-monitor/jellyfin.env` に `0600` で保存してください。
+
+```bash
+sudo systemctl status lcars-backend lcars-kiosk
+sudo systemctl restart lcars-backend
+sudo systemctl restart lcars-kiosk
 journalctl -u lcars-backend -u lcars-kiosk -f
 ```
 
-`lcars-backend` 以无登录 shell 的 `lcars` 用户运行，失败后 10 秒重试。`lcars-kiosk` 的 Xorg 必须打开 VT7，因此 unit 由 root 启动；实际 Openbox、Luakit 和浏览器子进程仍以 `lcars` 运行。kiosk 异常退出后 15 秒重试。
+物理的なバックライトの ON/OFF は本ソフトウェアでは制御しません。導入・削除時には既存の GUI、録画、配信サービスやメディアデータを置き換えたり削除したりしないでください。
 
-轮播时间在 `frontend/config.js` 中通过 `PAGE_ROTATION_SECONDS` 配置，默认值为 `15`；四页完整循环默认 60 秒。修改后刷新 kiosk（`sudo systemctl restart lcars-kiosk`）即可生效。
+## English
 
-开机自启已启用：
+### Overview
 
-```bash
-systemctl is-enabled lcars-backend lcars-kiosk
-```
+**STAR TREK LCARS SERVER MONITOR** is a lightweight, local-only status display for an Ubuntu media or TV server. It runs as a long-lived fullscreen kiosk on a small HDMI display and provides a Star Trek LCARS-inspired, read-only view of the server.
 
-## Jellyfin Key
-
-在 Jellyfin Dashboard 创建 `lcars-monitor` Key 后，仅由管理员写入 `/etc/lcars-monitor/jellyfin.env`：
+It rotates through four fixed pages:
 
 ```text
-JELLYFIN_API_KEY=...
+SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-权限必须保持目录 `0700 root:root`、文件 `0600 root:root`。变更 Key 后执行：
+The default dwell time is 15 seconds per page, or 60 seconds for one full cycle. Set `PAGE_ROTATION_SECONDS` in `frontend/config.js` to change it.
+
+### Features
+
+- **SYSTEM** — hostname, LAN address, kernel, uptime, CPU/core load, temperature, memory, root and recording storage, live network rate, and a Jellyfin playback summary.
+- **MIRAKURUN** — version, stream resource counts, dynamically discovered GR/BS/CS tuners, true activity state, and tuned channel. Mirakurun 4.x `isUsing` and `users` fields are interpreted so live viewing and EPG gathering are shown accurately.
+- **EPGSTATION** — active recording, next reservation, and recording-storage capacity.
+- **JELLYFIN** — active sessions, user/device/client, media or channel name, playback progress when available, and primary artwork.
+- **Fullscreen autostart** — systemd starts the local backend and an Xorg/Openbox/Luakit kiosk with no browser chrome.
+- **Non-invasive failures** — unreachable services are shown as `UNAVAILABLE`; the monitor does not restart, modify, or control them.
+
+### Architecture, privacy, and requirements
+
+The display is an HDMI → Xorg/Openbox/Luakit kiosk → single-page interface → local Python API stack. The Python API consumes Linux statistics plus local Mirakurun (40772), EPGStation (8888), and Jellyfin (8096) APIs.
+
+It binds only to `127.0.0.1:8765`; does not use the Docker socket; does not manage containers, Threadfin, reservations, tuners, recordings, or playback; and uses an unprivileged `lcars` account with systemd sandboxing. A restricted Jellyfin API key is loaded as a systemd credential from a root-only file outside this repository.
+
+Use Ubuntu Server or compatible systemd Linux with HDMI output, Python 3, Xorg, Openbox, Luakit, `xdotool`, and `unclutter`. Mirakurun 4.x is supported; verify `/api/tuners` before using a different schema.
+
+Keep secrets out of Git. Use `config/lcars-monitor.example.env` as a template and create `/etc/lcars-monitor/jellyfin.env` with mode `0600`.
 
 ```bash
+sudo systemctl status lcars-backend lcars-kiosk
 sudo systemctl restart lcars-backend
-```
-
-## HDMI 与显示器排障
-
-- 当前已验证输出为 `1024×600 @ 59.82 Hz`。
-- kiosk 会话内已禁用 screensaver 与 DPMS；这不影响显示器物理背光开关。
-- 关闭/重新开启物理背光后，后端继续运行；若 kiosk 未恢复，执行 `sudo systemctl restart lcars-kiosk`。
-- 如物理开关导致 HDMI disconnect，检查：
-
-```bash
-cat /sys/class/drm/card1-HDMI-A-1/status
-journalctl -b -k | rg -i 'hdmi|drm|i915'
-```
-
-## API 排障
-
-```bash
+sudo systemctl restart lcars-kiosk
+journalctl -u lcars-backend -u lcars-kiosk -f
 curl http://127.0.0.1:8765/api/status
-curl http://127.0.0.1:40772/api/tuners
-curl 'http://127.0.0.1:8888/api/recording?isHalfWidth=false'
 ```
 
-Jellyfin 发生认证或会话问题时，LCARS 只显示 `UNAVAILABLE` 或 `NO ACTIVE PLAYBACK`；不会影响播放。直播没有可靠总时长时显示 `LIVE STREAM`。
+The kiosk disables screensaver and DPMS, but never overrides a display's physical backlight switch. Review existing graphical sessions and production services before deployment. Never remove Docker, Threadfin, Mirakurun, EPGStation, Jellyfin, recording storage, or media data while uninstalling this project.
 
-## 更新与备份
+## Repository layout
 
-项目修改应在 `/opt/lcars-monitor` 内提交 Git；永远不要提交 `/etc/lcars-monitor/jellyfin.env`。代码更新后执行：
-
-```bash
-cd /opt/lcars-monitor
-git status
-sudo systemctl restart lcars-backend lcars-kiosk
+```text
+assets/        Sanitized README illustration
+backend/       Local Python read-only API
+frontend/      LCARS single-page interface
+scripts/       Backend and kiosk launch scripts
+systemd/       Service unit templates
+config/        Secret-free configuration example
 ```
 
-## 卸载与回滚
+## License
 
-```bash
-sudo systemctl disable --now lcars-kiosk lcars-backend
-sudo rm /etc/systemd/system/lcars-kiosk.service
-sudo rm /etc/systemd/system/lcars-backend.service
-sudo systemctl daemon-reload
-```
-
-之后才可删除 `/opt/lcars-monitor`、`/var/lib/lcars-monitor`、`/etc/lcars-monitor` 和 `lcars` 用户。不要自动移除共享的 Xorg、字体或浏览器软件包。绝对不要删除 Docker、Threadfin、Mirakurun、EPGStation、Jellyfin、录制盘或媒体数据。
+No license has been selected yet. Add one before redistributing or accepting external contributions.
