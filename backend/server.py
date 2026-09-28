@@ -142,11 +142,21 @@ def mirakurun_data() -> dict:
         status = get_json("http://127.0.0.1:40772/api/status")
         result = []
         for tuner in tuners:
+            # Mirakurun 4.x reports a live reservation in ``isUsing`` and
+            # describes the tuned service in the first entry of ``users``.
+            # ``isAvailable`` only describes whether the hardware can be used;
+            # it must not be used as a busy/idle indicator.
+            users = tuner.get("users") or []
+            stream = users[0].get("streamSetting", {}) if users else {}
+            channel = stream.get("channel", {})
+            channel_name = channel.get("name")
+            channel_number = channel.get("channel")
+            display_channel = channel_name or channel_number or "UNAVAILABLE"
+            if channel_name and channel_number and channel_number not in channel_name:
+                display_channel = f"{channel_name} ({channel_number})"
             result.append({"name": tuner.get("name", "UNNAMED"), "types": tuner.get("types", []),
-                           # Mirakurun's isAvailable is not a reliable busy/idle signal.
-                           # Only an explicitly disabled tuner is unavailable to the display.
-                           "state": "UNAVAILABLE" if tuner.get("isDisabled") else "IDLE",
-                           "channel": "UNAVAILABLE"})
+                           "state": "UNAVAILABLE" if tuner.get("isDisabled") else ("ACTIVE" if tuner.get("isUsing") else "IDLE"),
+                           "channel": display_channel})
         return {"status": "ONLINE", "last_update": now(), "version": status.get("version"),
                 "stream_count": status.get("streamCount"), "tuners": result}
     except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError) as error:
