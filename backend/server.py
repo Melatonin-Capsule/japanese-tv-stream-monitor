@@ -9,6 +9,7 @@ import socket
 import time
 import urllib.error
 import urllib.request
+import re
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -181,6 +182,8 @@ def jellyfin_data() -> dict:
                 continue
             active.append({"user": session.get("UserName", "UNAVAILABLE"), "device": session.get("DeviceName", "UNAVAILABLE"),
                            "client": session.get("Client", "UNAVAILABLE"), "title": now_playing.get("Name", "UNAVAILABLE"),
+                           "channel": now_playing.get("ChannelName") or now_playing.get("Name", "UNAVAILABLE"),
+                           "item_id": now_playing.get("Id"),
                            "state": "PAUSED" if state.get("IsPaused") else "PLAYING",
                            "position_ticks": state.get("PositionTicks"), "runtime_ticks": now_playing.get("RunTimeTicks")})
         return {"status": "ONLINE", "last_update": now(), "sessions": active}
@@ -189,8 +192,11 @@ def jellyfin_data() -> dict:
 
 
 def snapshot() -> dict:
-    return {"generated_at": now(), "system": system_data(), "mirakurun": mirakurun_data(),
-            "epgstation": epgstation_data(), "jellyfin": jellyfin_data()}
+    system = system_data()
+    jellyfin = jellyfin_data()
+    system["current_playback"] = jellyfin.get("sessions", [None])[0] if jellyfin.get("sessions") else None
+    return {"generated_at": now(), "system": system, "mirakurun": mirakurun_data(),
+            "epgstation": epgstation_data(), "jellyfin": jellyfin}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -202,6 +208,23 @@ class Handler(SimpleHTTPRequestHandler):
             body = json.dumps(snapshot(), ensure_ascii=False).encode()
             self.send_response(HTTPStatus.OK); self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+            return
+        match = re.fullmatch(r"/api/jellyfin-image/([A-Za-z0-9-]{1,64})", self.path)
+        if match and JELLYFIN_API_KEY:
+            try:
+                request = urllib.request.Request(
+                    f"{JELLYFIN_URL}/Items/{match.group(1)}/Images/Primary?maxWidth=180",
+                    headers={"X-Emby-Token": JELLYFIN_API_KEY},
+                )
+                with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+                    body = response.read()
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", response.headers.get_content_type())
+                    self.send_header("Cache-Control", "private, max-age=60")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers(); self.wfile.write(body)
+            except (OSError, urllib.error.URLError, urllib.error.HTTPError):
+                self.send_error(HTTPStatus.NOT_FOUND)
             return
         super().do_GET()
 

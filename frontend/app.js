@@ -29,6 +29,9 @@
     const m = data.memory || {}; byId('memUsed').textContent = bytes(m.used); byId('memAvail').textContent = bytes(m.available); byId('memPct').textContent = `${m.percent ?? 'N/A'}%`; byId('memBar').style.width = `${m.percent || 0}%`;
     byId('netRx').textContent = rate(data.network?.rx); byId('netTx').textContent = rate(data.network?.tx);
     setDisk('rootDisk', 'rootDiskBar', data.storage?.root); setDisk('recordDisk', 'recordDiskBar', data.storage?.recording);
+    const playback = data.current_playback; const logo = byId('nowPlayingLogo');
+    byId('nowPlayingState').textContent = playback?.state || 'JELLYFIN STATUS'; byId('nowPlayingTitle').textContent = playback?.channel || 'NO ACTIVE PLAYBACK'; byId('nowPlayingClient').textContent = playback ? `${playback.user} · ${playback.client}` : '—';
+    if (playback?.item_id) { logo.src = `/api/jellyfin-image/${playback.item_id}`; logo.hidden = false; } else { logo.removeAttribute('src'); logo.hidden = true; }
   }
 
   function renderTuners(data) {
