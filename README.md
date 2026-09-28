@@ -7,7 +7,7 @@
 ## 架构
 
 ```text
-7-inch HDMI → Xorg / Openbox → Epiphany web-application fullscreen → LCARS SPA
+7-inch HDMI → Xorg / Openbox → Epiphany fullscreen → LCARS SPA
                                                    ↓ localhost:8765
                                               Python backend
                               SYSTEM / Mirakurun / EPGStation / Jellyfin
