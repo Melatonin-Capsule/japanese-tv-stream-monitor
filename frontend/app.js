@@ -16,6 +16,7 @@
   }
 
   function makePath(values, offset) {
+    if (values.length < 2) return '';
     const width = 500 / (values.length - 1);
     return values.map((value, index) => `${index ? 'L' : 'M'}${(index * width).toFixed(1)},${(88 - value + offset).toFixed(1)}`).join(' ');
   }
