@@ -5,29 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>LCARS Server Monitor — Development Mock</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?display-config=30-v12">
 </head>
 <body>
   <main class="lcars-shell" aria-live="polite">
     <aside class="rail" aria-label="LCARS navigation">
-      <div class="rail-cap">LCARS</div>
       <div class="rail-spine"></div>
+      <div class="rail-clock clock" id="clock">00:00:00</div>
       <nav class="page-nav">
         <button data-target="system" class="nav-item active"><b>01</b> SYSTEM</button>
         <button data-target="mirakurun" class="nav-item"><b>02</b> MIRAKURUN</button>
         <button data-target="epgstation" class="nav-item"><b>03</b> EPGSTATION</button>
         <button data-target="jellyfin" class="nav-item"><b>04</b> JELLYFIN</button>
       </nav>
+      <div class="recording-indicator" id="recordingIndicator" hidden>RECORDING</div>
       <div class="rail-foot">TVSERVER<br><span>LOCAL OPS</span></div>
     </aside>
 
     <section class="display-area">
-      <header class="topbar">
-        <div class="warning" id="dataMode">LOCAL API REQUIRED</div>
-        <div class="clock" id="clock">00:00:00</div>
-        <div class="status-pill"><i></i> LOCAL DISPLAY</div>
-      </header>
-
       <section class="view active" id="system" data-page="SYSTEM">
         <div class="heading"><span class="index">01</span><h1>SYSTEM</h1><span>PRIMARY STATUS</span></div>
         <div class="system-grid">
@@ -89,7 +84,7 @@
       <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">15</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
     </section>
   </main>
-    <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script src="config.js?display-config=30-v12"></script>
+    <script src="app.js?display-config=30-v12"></script>
 </body>
 </html>

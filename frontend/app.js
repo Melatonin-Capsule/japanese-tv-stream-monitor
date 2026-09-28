@@ -64,7 +64,8 @@
   const setDisk = (label, bar, data) => { byId(label).textContent = data ? `${bytes(data.free)} FREE` : 'UNAVAILABLE'; byId(bar).style.width = `${data?.percent || 0}%`; };
   const formatTime = (value) => value ? new Date(value).toLocaleString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 'UNAVAILABLE';
   function renderEpg(data) {
-    const current = data.recordings?.[0]; const next = data.next_recording;
+    const current = data.recordings?.find((recording) => recording.is_recording) || null; const next = data.next_recording;
+    byId('recordingIndicator').hidden = !current;
     byId('recordingState').textContent = current ? 'RECORDING' : (data.status === 'ONLINE' ? 'RECORDING IDLE' : 'CONNECTION LOST');
     byId('recordingDetail').textContent = current ? `${current.title} · ${current.channel}` : (data.error || 'NO ACTIVE EPGSTATION RECORDING');
     byId('recordingTime').textContent = current ? `${formatTime(current.start_at)} — ${formatTime(current.end_at)}` : '—';
@@ -83,10 +84,9 @@
       const response = await fetch('/api/status', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      byId('dataMode').textContent = 'LIVE LOCAL DATA';
       renderSystem(data.system); renderTuners(data.mirakurun); renderEpg(data.epgstation); renderJellyfin(data.jellyfin);
       document.querySelectorAll('.last-update').forEach((item) => { item.textContent = data.mirakurun.last_update || 'UNAVAILABLE'; });
-    } catch (_) { byId('dataMode').textContent = 'LOCAL API UNAVAILABLE'; }
+    } catch (_) { /* Keep the most recent data visible while the local API reconnects. */ }
   }
   async function refreshSystem() {
     try {
