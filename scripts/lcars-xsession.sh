@@ -6,8 +6,7 @@ xset -dpms
 xset s noblank
 openbox &
 unclutter -idle 0.2 -root &
-# surf is a dedicated, chrome-free WebKit kiosk. -F requests X11 fullscreen.
-surf -F http://127.0.0.1:8765 &
+dbus-run-session -- epiphany --private-instance http://127.0.0.1:8765 &
 browser_pid=$!
 # Epiphany creates its window before it is ready to receive keyboard input.
 # Let it finish mapping, then toggle its own kiosk fullscreen mode.
