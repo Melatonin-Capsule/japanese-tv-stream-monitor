@@ -143,7 +143,9 @@ def mirakurun_data() -> dict:
         result = []
         for tuner in tuners:
             result.append({"name": tuner.get("name", "UNNAMED"), "types": tuner.get("types", []),
-                           "state": "IDLE" if tuner.get("isAvailable") else "UNAVAILABLE",
+                           # Mirakurun's isAvailable is not a reliable busy/idle signal.
+                           # Only an explicitly disabled tuner is unavailable to the display.
+                           "state": "UNAVAILABLE" if tuner.get("isDisabled") else "IDLE",
                            "channel": "UNAVAILABLE"})
         return {"status": "ONLINE", "last_update": now(), "version": status.get("version"),
                 "stream_count": status.get("streamCount"), "tuners": result}
