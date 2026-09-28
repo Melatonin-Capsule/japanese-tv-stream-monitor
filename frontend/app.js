@@ -50,7 +50,8 @@
   function renderJellyfin(data) {
     const session = data.sessions?.[0]; byId('jellyStatus').textContent = data.status; byId('jellyUpdate').textContent = data.last_update || '—'; byId('sessionCount').textContent = data.sessions?.length ?? '—';
     byId('playState').textContent = session?.state || (data.status === 'ONLINE' ? 'NO ACTIVE PLAYBACK' : 'UNAVAILABLE'); byId('sessionUser').textContent = session ? `${session.user} · ${session.device}` : '—'; byId('sessionTitle').textContent = session?.title || '—'; byId('sessionClient').textContent = session?.client || data.error || '—';
-    const percent = session?.runtime_ticks ? Math.round(100 * session.position_ticks / session.runtime_ticks) : 0; byId('sessionProgress').style.width = `${percent}%`; byId('sessionElapsed').textContent = session ? `${percent}% ELAPSED` : '—'; byId('sessionTotal').textContent = session ? 'TOTAL DURATION' : '—'; byId('jellyNote').textContent = data.error || 'SESSION DATA IS READ-ONLY';
+    const hasDuration = Boolean(session?.runtime_ticks); const percent = hasDuration ? Math.round(100 * session.position_ticks / session.runtime_ticks) : null;
+    byId('sessionProgress').style.width = `${percent ?? 0}%`; byId('sessionElapsed').textContent = session ? (hasDuration ? `${percent}% ELAPSED` : 'LIVE STREAM') : '—'; byId('sessionTotal').textContent = session ? (hasDuration ? 'TOTAL DURATION' : 'DURATION UNAVAILABLE') : '—'; byId('jellyNote').textContent = data.error || 'SESSION DATA IS READ-ONLY';
   }
 
   async function refresh() {
