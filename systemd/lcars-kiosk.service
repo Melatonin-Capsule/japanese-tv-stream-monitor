@@ -1,0 +1,18 @@
+[Unit]
+Description=LCARS HDMI kiosk session
+Requires=lcars-backend.service
+After=lcars-backend.service graphical.target
+Conflicts=getty@tty7.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/lcars-monitor
+Environment=HOME=/root
+ExecStart=/usr/bin/xinit /opt/lcars-monitor/scripts/lcars-root-xsession.sh -- :0 vt7 -nolisten tcp
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=15
+
+[Install]
+WantedBy=graphical.target

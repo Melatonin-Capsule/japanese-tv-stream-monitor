@@ -1,20 +1,12 @@
 #!/bin/sh
-# Manual Phase 4 test session. This is not a systemd unit and has no autostart.
+# Browser client for the manual and systemd kiosk sessions.
 set -eu
-
-python3 /opt/lcars-monitor/backend/server.py &
-backend_pid=$!
-cleanup() {
-    kill "$backend_pid" 2>/dev/null || true
-}
-trap cleanup EXIT INT TERM
-
 xset s off
 xset -dpms
 xset s noblank
 openbox &
 unclutter -idle 0.2 -root &
-chromium-browser \
+exec chromium-browser \
     --kiosk \
     --start-fullscreen \
     --no-first-run \
