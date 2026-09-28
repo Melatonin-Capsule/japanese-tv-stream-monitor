@@ -209,6 +209,11 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_response(HTTPStatus.OK); self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
             return
+        if self.path == "/api/system":
+            body = json.dumps(system_data(), ensure_ascii=False).encode()
+            self.send_response(HTTPStatus.OK); self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+            return
         match = re.fullmatch(r"/api/jellyfin-image/([A-Za-z0-9-]{1,64})", self.path)
         if match and JELLYFIN_API_KEY:
             try:

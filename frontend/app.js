@@ -4,6 +4,7 @@
   const pages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
   let activeIndex = 0;
   let secondsLeft = ROTATION_SECONDS;
+  const networkHistory = { rx: [], tx: [] };
 
   const byId = (id) => document.getElementById(id);
   const pad = (number) => String(number).padStart(2, '0');
@@ -19,6 +20,19 @@
     return values.map((value, index) => `${index ? 'L' : 'M'}${(index * width).toFixed(1)},${(88 - value + offset).toFixed(1)}`).join(' ');
   }
 
+  function renderNetworkGraph(rx, tx) {
+    if (rx != null && tx != null) {
+      networkHistory.rx.push(rx); networkHistory.tx.push(tx);
+      if (networkHistory.rx.length > 45) { networkHistory.rx.shift(); networkHistory.tx.shift(); }
+    }
+    const all = [...networkHistory.rx, ...networkHistory.tx];
+    if (!all.length) return;
+    const maximum = Math.max(...all, 1);
+    const scale = (values) => values.map((value) => 8 + (value / maximum) * 72);
+    byId('rxPath').setAttribute('d', makePath(scale(networkHistory.rx), 0));
+    byId('txPath').setAttribute('d', makePath(scale(networkHistory.tx), 0));
+  }
+
   function renderSystem(data) {
     const coreBars = byId('coreBars');
     const cores = data.cores || [];
@@ -28,10 +42,13 @@
     byId('loadAvg').textContent = (data.load || []).join(' / ') || 'N/A';
     const m = data.memory || {}; byId('memUsed').textContent = bytes(m.used); byId('memAvail').textContent = bytes(m.available); byId('memPct').textContent = `${m.percent ?? 'N/A'}%`; byId('memBar').style.width = `${m.percent || 0}%`;
     byId('netRx').textContent = rate(data.network?.rx); byId('netTx').textContent = rate(data.network?.tx);
+    renderNetworkGraph(data.network?.rx, data.network?.tx);
     setDisk('rootDisk', 'rootDiskBar', data.storage?.root); setDisk('recordDisk', 'recordDiskBar', data.storage?.recording);
-    const playback = data.current_playback; const logo = byId('nowPlayingLogo');
-    byId('nowPlayingState').textContent = playback?.state || 'JELLYFIN STATUS'; byId('nowPlayingTitle').textContent = playback?.channel || 'NO ACTIVE PLAYBACK'; byId('nowPlayingClient').textContent = playback ? `${playback.user} · ${playback.client}` : '—';
-    if (playback?.item_id) { logo.src = `/api/jellyfin-image/${playback.item_id}`; logo.hidden = false; } else { logo.removeAttribute('src'); logo.hidden = true; }
+    if (Object.hasOwn(data, 'current_playback')) {
+      const playback = data.current_playback; const logo = byId('nowPlayingLogo');
+      byId('nowPlayingState').textContent = playback?.state || 'JELLYFIN STATUS'; byId('nowPlayingTitle').textContent = playback?.channel || 'NO ACTIVE PLAYBACK'; byId('nowPlayingClient').textContent = playback ? `${playback.user} · ${playback.client}` : '—';
+      if (playback?.item_id) { logo.src = `/api/jellyfin-image/${playback.item_id}`; logo.hidden = false; } else { logo.removeAttribute('src'); logo.hidden = true; }
+    }
   }
 
   function renderTuners(data) {
@@ -67,6 +84,13 @@
       document.querySelectorAll('.last-update').forEach((item) => { item.textContent = data.mirakurun.last_update || 'UNAVAILABLE'; });
     } catch (_) { byId('dataMode').textContent = 'LOCAL API UNAVAILABLE'; }
   }
+  async function refreshSystem() {
+    try {
+      const response = await fetch('/api/system', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      renderSystem(await response.json());
+    } catch (_) { /* Keep the last graph; full refresh reports service failures. */ }
+  }
 
   function showPage(index) {
     activeIndex = (index + pages.length) % pages.length;
@@ -90,4 +114,5 @@
   setInterval(updateClock, 1000);
   setInterval(tick, 1000);
   setInterval(refresh, 5000);
+  setInterval(refreshSystem, 2000);
 })();
