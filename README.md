@@ -27,7 +27,8 @@ an automatic-start mechanism.
 
 The final systemd kiosk uses native Epiphany rather than Chromium Snap: Chromium
 works in an interactive session but Snap denies launches from a normal systemd
-cgroup. Epiphany runs in application mode and Openbox makes it fullscreen.
+cgroup. Epiphany runs as a private instance, and Openbox plus F11 make it
+fullscreen.
 
 Jellyfin remains `UNAVAILABLE` until `JELLYFIN_API_KEY` is supplied via a
 restricted, non-repository configuration source. Never put that key in this

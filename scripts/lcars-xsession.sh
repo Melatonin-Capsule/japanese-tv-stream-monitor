@@ -6,8 +6,9 @@ xset -dpms
 xset s noblank
 openbox &
 unclutter -idle 0.2 -root &
-epiphany --application-mode --profile=/var/lib/lcars-monitor/org.gnome.Epiphany.WebApp_lcars http://127.0.0.1:8765 &
+epiphany --private-instance http://127.0.0.1:8765 &
 browser_pid=$!
 sleep 2
 wmctrl -r :ACTIVE: -b add,fullscreen 2>/dev/null || true
+xdotool key --clearmodifiers F11 2>/dev/null || true
 wait "$browser_pid"
