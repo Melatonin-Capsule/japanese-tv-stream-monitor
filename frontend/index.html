@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>LCARS Server Monitor — Development Mock</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="lcars-shell" aria-live="polite">
+    <aside class="rail" aria-label="LCARS navigation">
+      <div class="rail-cap">LCARS</div>
+      <div class="rail-spine"></div>
+      <nav class="page-nav">
+        <button data-target="system" class="nav-item active"><b>01</b> SYSTEM</button>
+        <button data-target="mirakurun" class="nav-item"><b>02</b> MIRAKURUN</button>
+        <button data-target="epgstation" class="nav-item"><b>03</b> EPGSTATION</button>
+        <button data-target="jellyfin" class="nav-item"><b>04</b> JELLYFIN</button>
+      </nav>
+      <div class="rail-foot">TVSERVER<br><span>LOCAL OPS</span></div>
+    </aside>
+
+    <section class="display-area">
+      <header class="topbar">
+        <div class="warning">DEVELOPMENT MOCK DATA</div>
+        <div class="clock" id="clock">00:00:00</div>
+        <div class="status-pill"><i></i> LOCAL DISPLAY</div>
+      </header>
+
+      <section class="view active" id="system" data-page="SYSTEM">
+        <div class="heading"><span class="index">01</span><h1>SYSTEM</h1><span>PRIMARY STATUS</span></div>
+        <div class="system-grid">
+          <article class="panel cpu-panel">
+            <h2>CPU / THERMALS</h2>
+            <div class="metric-major"><strong id="cpuTotal">23</strong><small>% UTILIZATION</small></div>
+            <div class="core-row" id="coreBars"></div>
+            <div class="metric-line"><span>PACKAGE TEMP</span><b id="cpuTemp">44.0°C</b></div>
+            <div class="metric-line"><span>LOAD AVG</span><b id="loadAvg">0.53 / 0.39 / 0.31</b></div>
+          </article>
+          <article class="panel memory-panel">
+            <h2>MEMORY</h2>
+            <div class="dual-metric"><span><b id="memUsed">1.8</b> / 7.6 GiB</span><em id="memPct">24%</em></div>
+            <div class="bar"><i id="memBar" style="width:24%"></i></div>
+            <div class="metric-line"><span>AVAILABLE</span><b id="memAvail">5.8 GiB</b></div>
+            <div class="metric-line"><span>SWAP</span><b>0.0 / 4.0 GiB</b></div>
+          </article>
+          <article class="panel storage-panel">
+            <h2>STORAGE ARRAY</h2>
+            <div class="storage-line"><span>ROOT FS</span><b>61 GiB FREE</b><div class="bar"><i style="width:45%"></i></div></div>
+            <div class="storage-line"><span>TV RECORD</span><b>1.3 TiB FREE</b><div class="bar cyan"><i style="width:64%"></i></div></div>
+            <small>NFS RECORDING VOLUME · ONLINE</small>
+          </article>
+          <article class="panel graph-panel">
+            <h2>NETWORK THROUGHPUT</h2>
+            <div class="network-values"><span>RX <b id="netRx">8.4 MB/s</b></span><span>TX <b id="netTx">1.2 MB/s</b></span></div>
+            <svg class="chart" viewBox="0 0 500 90" preserveAspectRatio="none" aria-label="Mock network graph"><path id="rxPath" class="rx"/><path id="txPath" class="tx"/></svg>
+          </article>
+          <article class="panel info-panel">
+            <h2>NODE INFORMATION</h2>
+            <div class="info-grid"><span>HOSTNAME</span><b>tvserver</b><span>LAN ADDRESS</span><b>192.168.0.4</b><span>UPTIME</span><b id="uptime">08:12:36</b><span>KERNEL</span><b>6.8.0-142-generic</b></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="mirakurun" data-page="MIRAKURUN">
+        <div class="heading"><span class="index">02</span><h1>MIRAKURUN</h1><span>TUNER ARRAY</span></div>
+        <div class="service-summary"><div><small>SERVICE</small><b>ONLINE</b></div><div><small>API</small><b>127.0.0.1:40772</b></div><div><small>LAST UPDATE</small><b class="last-update">--:--:--</b></div></div>
+        <div class="tuner-grid" id="tunerGrid"></div>
+        <article class="panel service-note"><h2>OPERATIONS</h2><p>Dynamic tuner discovery will replace this mock list. Channel data is only shown when provided by the Mirakurun API.</p></article>
+      </section>
+
+      <section class="view" id="epgstation" data-page="EPGSTATION">
+        <div class="heading"><span class="index">03</span><h1>EPGSTATION</h1><span>RECORDING OPERATIONS</span></div>
+        <div class="epg-grid">
+          <article class="panel recording-state"><h2>CURRENT RECORDING</h2><div class="idle-mark"><i></i><b>RECORDING IDLE</b></div><p>NO ACTIVE EPGSTATION RECORDING</p><small>Mock state — no production recording data is read in Phase 2.</small></article>
+          <article class="panel next-recording"><h2>NEXT RECORDING</h2><span class="channel-tag">NHK総合１・東京</span><h3>ニュース７</h3><p>19:00 — 19:30 · 30 MINUTES</p><div class="reservation-line"><span>RESERVATION STATUS</span><b>READY</b></div></article>
+          <article class="panel recording-disk"><h2>RECORDING STORAGE</h2><div class="metric-major compact"><strong>64</strong><small>% USED</small></div><div class="bar cyan"><i style="width:64%"></i></div><p>1.3 TiB FREE · /media/tv_record</p></article>
+        </div>
+      </section>
+
+      <section class="view" id="jellyfin" data-page="JELLYFIN">
+        <div class="heading"><span class="index">04</span><h1>JELLYFIN</h1><span>SESSION MONITOR</span></div>
+        <div class="service-summary"><div><small>SERVER</small><b>ONLINE</b></div><div><small>VERSION</small><b>10.11.6</b></div><div><small>ACTIVE SESSIONS</small><b>01</b></div></div>
+        <article class="panel session-card"><div class="play-state"><i></i> PLAYING</div><div class="media-art">LCARS<br>MEDIA</div><div class="media-data"><small>USER / DEVICE</small><h2>kai · Android TV</h2><small>NOW PLAYING</small><h3>Star Trek: Strange New Worlds</h3><p>S02E03 · Tomorrow and Tomorrow and Tomorrow</p><div class="progress"><i style="width:68%"></i></div><div class="time-row"><span>31:26 ELAPSED</span><span>46:12 TOTAL</span></div></div></article>
+        <p class="session-note">Mock session only. Jellyfin data will remain unavailable until a restricted server-side API key is configured.</p>
+      </section>
+
+      <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">15</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
+    </section>
+  </main>
+  <script src="mock-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
