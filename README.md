@@ -25,6 +25,10 @@ only to open the virtual terminal; Openbox, Chromium, and the backend run as
 `kai`. Closing Chromium ends the manual test and stops its backend. It is not
 an automatic-start mechanism.
 
+The final systemd kiosk uses native Epiphany rather than Chromium Snap: Chromium
+works in an interactive session but Snap denies launches from a normal systemd
+cgroup. Epiphany runs in application mode and Openbox makes it fullscreen.
+
 Jellyfin remains `UNAVAILABLE` until `JELLYFIN_API_KEY` is supplied via a
 restricted, non-repository configuration source. Never put that key in this
 repository, frontend files, URLs, or logs.

@@ -10,7 +10,7 @@ User=root
 WorkingDirectory=/opt/lcars-monitor
 Environment=HOME=/root
 ExecStart=/usr/bin/xinit /opt/lcars-monitor/scripts/lcars-root-xsession.sh -- :0 vt7 -nolisten tcp
-Restart=on-failure
+Restart=always
 RestartSec=15
 TimeoutStopSec=15
 
