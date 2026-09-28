@@ -9,3 +9,15 @@
 .footer { min-height:26px; border-top:2px solid var(--purple); color:var(--muted); font-size:.65em; }.footer #pageName { color:var(--peach); font-weight:bold; }.footer b { color:var(--cyan); font-size:1.15em; } @keyframes appear { from { opacity:0; transform:translateX(8px); } to { opacity:1; transform:none; } }
 @media (max-width:850px) { .rail { min-width:108px; }.system-grid { grid-template-columns:1fr 1fr; }.storage-panel { grid-column:2; }.graph-panel { grid-column:1 / 3; }.info-panel { display:none; }.tuner-grid { grid-template-columns:repeat(2,1fr); }.tuner { min-height:100px; }.tuner h2 { margin:1.5vh 0 .5vh; }.epg-grid { grid-template-columns:1fr 1fr; }.recording-disk { display:none; }.session-card { grid-template-columns:25% 1fr; }.media-art { display:none; } }
 @media (max-height:520px) { .rail-cap { padding:.8vh 1vw; }.page-nav { margin-top:2vh; gap:.7vh; }.nav-item { padding:.8vh 1vw; }.heading { min-height:38px; }.system-grid { padding-top:1vh; gap:.8vh; }.panel { padding:1vh 1vw; }.core-row { margin:1vh 0; }.service-summary { padding:1vh 0; }.tuner { min-height:82px; }.tuner h2 { margin:1vh 0 .3vh; }.epg-grid { padding-top:1vh; }.idle-mark { margin:3vh 0 1vh; } }
+
+/* Distance-reading profile for the 1024 x 600 panel. */
+body { font-family:"DejaVu Sans","Noto Sans CJK JP","Noto Sans CJK SC",sans-serif; font-size:clamp(12px,1.35vw,18px); letter-spacing:.045em; }
+.warning { font-size:.82em; }.clock { font-size:1.55em; }.status-pill { font-size:.8em; }
+.heading h1 { font-size:clamp(28px,4.35vw,52px); }.heading > span:last-child { font-size:.8em; }.panel h2 { font-size:1em; }
+.metric-major strong { font-size:clamp(42px,5.2vw,68px); }.core-row div { font-size:.8em; }.metric-line,.reservation-line { font-size:.88em; }
+.storage-line { font-size:.86em; }.network-values { font-size:.9em; }.info-grid { font-size:.82em; }
+.service-summary small { font-size:.72em; }.service-summary b { font-size:1em; }.tuner-top { font-size:.76em; }
+.tuner h2 { font-size:1.12em; }.tuner p { font-size:.72em; }.tuner strong { font-size:1.05em; }.service-note p { font-size:.84em; }
+.recording-state p,.recording-state small,.recording-disk p { font-size:.82em; }.channel-tag { font-size:.75em; }.next-recording p { font-size:.85em; }
+.play-state { font-size:.85em; }.media-data small { font-size:.75em; }.media-data h2 { font-size:1.28em; }.media-data h3 { font-size:1.65em; }.media-data p { font-size:.85em; }.time-row,.session-note { font-size:.8em; }
+.footer { min-height:28px; font-size:.78em; }
