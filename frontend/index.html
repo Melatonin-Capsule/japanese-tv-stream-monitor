@@ -23,7 +23,7 @@
 
     <section class="display-area">
       <header class="topbar">
-        <div class="warning">DEVELOPMENT MOCK DATA</div>
+        <div class="warning" id="dataMode">LOCAL API REQUIRED</div>
         <div class="clock" id="clock">00:00:00</div>
         <div class="status-pill"><i></i> LOCAL DISPLAY</div>
       </header>
@@ -47,8 +47,8 @@
           </article>
           <article class="panel storage-panel">
             <h2>STORAGE ARRAY</h2>
-            <div class="storage-line"><span>ROOT FS</span><b>61 GiB FREE</b><div class="bar"><i style="width:45%"></i></div></div>
-            <div class="storage-line"><span>TV RECORD</span><b>1.3 TiB FREE</b><div class="bar cyan"><i style="width:64%"></i></div></div>
+            <div class="storage-line"><span>ROOT FS</span><b id="rootDisk">WAITING</b><div class="bar"><i id="rootDiskBar" style="width:0"></i></div></div>
+            <div class="storage-line"><span>TV RECORD</span><b id="recordDisk">WAITING</b><div class="bar cyan"><i id="recordDiskBar" style="width:0"></i></div></div>
             <small>NFS RECORDING VOLUME · ONLINE</small>
           </article>
           <article class="panel graph-panel">
@@ -73,24 +73,22 @@
       <section class="view" id="epgstation" data-page="EPGSTATION">
         <div class="heading"><span class="index">03</span><h1>EPGSTATION</h1><span>RECORDING OPERATIONS</span></div>
         <div class="epg-grid">
-          <article class="panel recording-state"><h2>CURRENT RECORDING</h2><div class="idle-mark"><i></i><b>RECORDING IDLE</b></div><p>NO ACTIVE EPGSTATION RECORDING</p><small>Mock state — no production recording data is read in Phase 2.</small></article>
-          <article class="panel next-recording"><h2>NEXT RECORDING</h2><span class="channel-tag">NHK総合１・東京</span><h3>ニュース７</h3><p>19:00 — 19:30 · 30 MINUTES</p><div class="reservation-line"><span>RESERVATION STATUS</span><b>READY</b></div></article>
-          <article class="panel recording-disk"><h2>RECORDING STORAGE</h2><div class="metric-major compact"><strong>64</strong><small>% USED</small></div><div class="bar cyan"><i style="width:64%"></i></div><p>1.3 TiB FREE · /media/tv_record</p></article>
+          <article class="panel recording-state"><h2>CURRENT RECORDING</h2><div class="idle-mark"><i></i><b id="recordingState">WAITING FOR API</b></div><p id="recordingDetail">—</p><small id="recordingTime">—</small></article>
+          <article class="panel next-recording"><h2>NEXT RECORDING</h2><span class="channel-tag" id="nextChannel">UNAVAILABLE</span><h3 id="nextTitle">WAITING FOR API</h3><p id="nextTime">—</p><div class="reservation-line"><span>RESERVATION STATUS</span><b id="reserveState">UNAVAILABLE</b></div></article>
+          <article class="panel recording-disk"><h2>RECORDING STORAGE</h2><div class="metric-major compact"><strong id="epgDiskPct">—</strong><small>% USED</small></div><div class="bar cyan"><i id="epgDiskBar" style="width:0"></i></div><p id="epgDiskFree">WAITING FOR API</p></article>
         </div>
       </section>
 
       <section class="view" id="jellyfin" data-page="JELLYFIN">
         <div class="heading"><span class="index">04</span><h1>JELLYFIN</h1><span>SESSION MONITOR</span></div>
-        <div class="service-summary"><div><small>SERVER</small><b>ONLINE</b></div><div><small>VERSION</small><b>10.11.6</b></div><div><small>ACTIVE SESSIONS</small><b>01</b></div></div>
-        <article class="panel session-card"><div class="play-state"><i></i> PLAYING</div><div class="media-art">LCARS<br>MEDIA</div><div class="media-data"><small>USER / DEVICE</small><h2>kai · Android TV</h2><small>NOW PLAYING</small><h3>Star Trek: Strange New Worlds</h3><p>S02E03 · Tomorrow and Tomorrow and Tomorrow</p><div class="progress"><i style="width:68%"></i></div><div class="time-row"><span>31:26 ELAPSED</span><span>46:12 TOTAL</span></div></div></article>
-        <p class="session-note">Mock session only. Jellyfin data will remain unavailable until a restricted server-side API key is configured.</p>
+        <div class="service-summary"><div><small>SERVER</small><b id="jellyStatus">WAITING</b></div><div><small>LAST UPDATE</small><b id="jellyUpdate">—</b></div><div><small>ACTIVE SESSIONS</small><b id="sessionCount">—</b></div></div>
+        <article class="panel session-card"><div class="play-state"><i></i> <span id="playState">UNAVAILABLE</span></div><div class="media-art">LCARS<br>MEDIA</div><div class="media-data"><small>USER / DEVICE</small><h2 id="sessionUser">WAITING FOR API</h2><small>NOW PLAYING</small><h3 id="sessionTitle">UNAVAILABLE</h3><p id="sessionClient">—</p><div class="progress"><i id="sessionProgress" style="width:0"></i></div><div class="time-row"><span id="sessionElapsed">—</span><span id="sessionTotal">—</span></div></div></article>
+        <p class="session-note" id="jellyNote">A restricted server-side API key is required for session monitoring.</p>
       </section>
 
       <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">15</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
     </section>
   </main>
-  <script src="mock-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
-

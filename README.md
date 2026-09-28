@@ -1,10 +1,11 @@
 # LCARS Server Monitor
 
-Phase 2 front-end prototype for `tvserver`.
+Phase 3 local-only monitor for `tvserver`.
 
-This is a self-contained HTML/CSS/JavaScript SPA. It deliberately uses only
-development mock data and does not contact Mirakurun, EPGStation, Jellyfin,
-Docker, or any other service.
+The browser is a self-contained HTML/CSS/JavaScript SPA.  The Python standard-
+library backend serves it and exposes one local-only endpoint: `/api/status`.
+It reads system files plus the read-only Mirakurun and EPGStation APIs. It does
+not access Docker or Threadfin.
 
 The four fixed views rotate every 15 seconds:
 
@@ -13,9 +14,13 @@ The four fixed views rotate every 15 seconds:
 3. EPGSTATION
 4. JELLYFIN
 
-Open `frontend/index.html` in a modern browser for design review. The target
-viewport is 1024 x 600, with responsive layouts for 800 x 480 and 1280 x 800.
+For a temporary manual test, run `python3 backend/server.py`, then open
+`http://127.0.0.1:8765`. The target viewport is 1024 x 600, with responsive
+layouts for 800 x 480 and 1280 x 800. This does not install or enable a service.
 
-No deployment, service, browser kiosk, or system configuration is included in
-this phase.
+Jellyfin remains `UNAVAILABLE` until `JELLYFIN_API_KEY` is supplied via a
+restricted, non-repository configuration source. Never put that key in this
+repository, frontend files, URLs, or logs.
 
+No deployment, service unit, browser kiosk, or system configuration is included
+in this phase.
