@@ -4,7 +4,8 @@
   const ROTATION_SECONDS = Number.isFinite(configuredRotation) && configuredRotation >= 5
     ? configuredRotation
     : 30;
-  const pages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
+  const allPages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
+  let pages = [...allPages];
   let activeIndex = 0;
   let secondsLeft = ROTATION_SECONDS;
   const networkHistory = { rx: [], tx: [] };
@@ -86,12 +87,30 @@
     byId('sessionProgress').style.width = `${percent ?? 0}%`; byId('sessionElapsed').textContent = session ? (hasDuration ? `${percent}% ELAPSED` : 'LIVE STREAM') : '—'; byId('sessionTotal').textContent = session ? (hasDuration ? 'TOTAL DURATION' : 'DURATION UNAVAILABLE') : '—'; byId('jellyNote').textContent = data.error || 'SESSION DATA IS READ-ONLY';
   }
 
+  function updateJellyfinRotation(data) {
+    const showJellyfin = (data.sessions || []).length > 0;
+    const nextPages = showJellyfin ? allPages : allPages.filter((page) => page !== 'jellyfin');
+    if (nextPages.join() === pages.join()) return;
+    const currentPage = pages[activeIndex];
+    pages = nextPages;
+    const jellyfinButton = document.querySelector('.nav-item[data-target="jellyfin"]');
+    jellyfinButton.hidden = !showJellyfin;
+    const nextIndex = pages.indexOf(currentPage);
+    if (nextIndex >= 0) {
+      activeIndex = nextIndex;
+    } else {
+      // Playback ended while its page was visible: advance to SYSTEM.
+      showPage(0);
+    }
+  }
+
   async function refresh() {
     try {
       const response = await fetch('/api/status', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       renderSystem(data.system); renderTuners(data.mirakurun); renderEpg(data.epgstation); renderJellyfin(data.jellyfin);
+      updateJellyfinRotation(data.jellyfin);
       document.querySelectorAll('.last-update').forEach((item) => { item.textContent = data.mirakurun.last_update || 'UNAVAILABLE'; });
     } catch (_) { /* Keep the most recent data visible while the local API reconnects. */ }
   }
