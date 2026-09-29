@@ -14,20 +14,20 @@ A lightweight, local-only server monitor with a Star Trek LCARS-inspired interfa
 
 **STAR TREK LCARS SERVER MONITOR** 是为 Ubuntu 媒体/电视服务器设计的本地状态显示系统。它在小尺寸 HDMI 显示器上以无浏览器边框的全屏 kiosk 方式长期运行，快速展示服务状态，而不充当服务器管理后台。
 
-界面按固定顺序自动轮播：
+界面按以下顺序自动轮播；当 Jellyfin 有活跃播放会话时会包含 Jellyfin 页：
 
 ```text
 SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-默认每页显示 30 秒、完整循环 120 秒。可在 `frontend/config.js` 通过 `PAGE_ROTATION_SECONDS` 调整停留时间。
+默认每页显示 30 秒。Jellyfin 空闲时，自动轮播会跳过 Jellyfin 页（完整循环为 90 秒）；左侧导航菜单仍保留，且有播放会话时 Jellyfin 页会自动重新加入轮播。可在 `frontend/config.js` 通过 `PAGE_ROTATION_SECONDS` 调整停留时间。
 
 ### 功能
 
-- **SYSTEM**：主机名、LAN IP、内核、运行时间、CPU/各核心负载、温度、内存、根目录和录制盘空间、网络实时流量，以及 Jellyfin 当前播放摘要。
+- **SYSTEM**：主机名、LAN IP、内核、运行时间、CPU/各核心负载、温度、内存、根目录和录制盘空间、网络实时流量。
 - **MIRAKURUN**：版本、流资源统计、动态 tuner 列表、GR/BS/CS 类型、真实占用状态与当前频道。支持 Mirakurun 4.x 的 `isUsing`/`users` 字段，可正确显示直播和 EPG 抓取造成的占用。
 - **EPGSTATION**：当前录制、下一条预约、录制盘使用率与可用容量。
-- **JELLYFIN**：活动播放会话、用户/设备/客户端、媒体或频道名称、可用时的播放进度及节目图片。
+- **JELLYFIN**：活动播放会话、用户/设备/客户端、媒体或频道名称，以及可用时的播放进度。
 - **自动全屏启动**：systemd 在开机后启动本地后端及 Xorg/Openbox/Luakit kiosk，不显示地址栏、标签栏或窗口边框。
 - **安全降级**：上游服务无法访问时仅显示 `UNAVAILABLE`，不会修改、重启或控制任何电视服务。
 
@@ -72,14 +72,14 @@ kiosk 会话会禁用 screensaver 与 DPMS，但不会控制显示器的物理�
 
 **STAR TREK LCARS SERVER MONITOR** は、Ubuntu のテレビ・メディアサーバーに接続した小型 HDMI ディスプレイ向けのローカル専用ステータスモニターです。LCARS をイメージした画面を、ブラウザーの UI を表示しない全画面 kiosk として常時表示します。
 
-`SYSTEM`、`MIRAKURUN`、`EPGSTATION`、`JELLYFIN` の 4 ページを固定順で循環します。標準設定は 1 ページ 30 秒、1 周 120 秒で、`frontend/config.js` の `PAGE_ROTATION_SECONDS` から変更できます。
+`SYSTEM`、`MIRAKURUN`、`EPGSTATION`、`JELLYFIN` の順に循環します。Jellyfin に再生中セッションがある場合のみ JELLYFIN ページを含めます。標準設定は 1 ページ 30 秒です。Jellyfin がアイドル時は JELLYFIN ページを自動的にスキップするため 1 周 90 秒になり、左側のナビゲーションは常に表示されたままです。再生開始時には JELLYFIN ページが自動的に循環へ戻ります。`frontend/config.js` の `PAGE_ROTATION_SECONDS` から変更できます。
 
 ### 機能
 
-- **SYSTEM**：ホスト情報、LAN IP、カーネル、稼働時間、CPU、温度、メモリー、ストレージ、ネットワーク速度、Jellyfin 再生概要。
+- **SYSTEM**：ホスト情報、LAN IP、カーネル、稼働時間、CPU、温度、メモリー、ストレージ、ネットワーク速度。
 - **MIRAKURUN**：バージョン、ストリーム資源、GR/BS/CS チューナー、利用状態、受信チャンネル。Mirakurun 4.x の `isUsing` と `users` を解釈し、ライブ視聴と EPG 取得の実際の占有を表示します。
 - **EPGSTATION**：録画中、次の予約、録画用ストレージ。
-- **JELLYFIN**：再生中セッション、ユーザー/デバイス/クライアント、番組名、再生進捗、利用可能な画像。
+- **JELLYFIN**：再生中セッション、ユーザー/デバイス/クライアント、番組名、再生進捗。
 - **自動起動**：systemd がローカル API と Xorg/Openbox/Luakit の全画面 kiosk を起動します。
 - **安全な障害表示**：サービス障害時は `UNAVAILABLE` と表示するだけで、既存サービスを操作しません。
 
@@ -104,20 +104,20 @@ journalctl -u lcars-backend -u lcars-kiosk -f
 
 **STAR TREK LCARS SERVER MONITOR** is a lightweight, local-only status display for an Ubuntu media or TV server. It runs as a long-lived fullscreen kiosk on a small HDMI display and provides a Star Trek LCARS-inspired, read-only view of the server.
 
-It rotates through four fixed pages:
+It rotates through the following pages, including JELLYFIN only when it has an active playback session:
 
 ```text
 SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-The default dwell time is 30 seconds per page, or 120 seconds for one full cycle. Set `PAGE_ROTATION_SECONDS` in `frontend/config.js` to change it.
+The default dwell time is 30 seconds per page. When Jellyfin is idle, its page is skipped from automatic rotation, making a full cycle 90 seconds; the left navigation remains visible, and the page automatically returns to rotation when playback starts. Set `PAGE_ROTATION_SECONDS` in `frontend/config.js` to change it.
 
 ### Features
 
-- **SYSTEM** — hostname, LAN address, kernel, uptime, CPU/core load, temperature, memory, root and recording storage, live network rate, and a Jellyfin playback summary.
+- **SYSTEM** — hostname, LAN address, kernel, uptime, CPU/core load, temperature, memory, root and recording storage, and live network rate.
 - **MIRAKURUN** — version, stream resource counts, dynamically discovered GR/BS/CS tuners, true activity state, and tuned channel. Mirakurun 4.x `isUsing` and `users` fields are interpreted so live viewing and EPG gathering are shown accurately.
 - **EPGSTATION** — active recording, next reservation, and recording-storage capacity.
-- **JELLYFIN** — active sessions, user/device/client, media or channel name, playback progress when available, and primary artwork.
+- **JELLYFIN** — active sessions, user/device/client, media or channel name, and playback progress when available.
 - **Fullscreen autostart** — systemd starts the local backend and an Xorg/Openbox/Luakit kiosk with no browser chrome.
 - **Non-invasive failures** — unreachable services are shown as `UNAVAILABLE`; the monitor does not restart, modify, or control them.
 
