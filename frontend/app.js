@@ -93,8 +93,6 @@
     if (nextPages.join() === pages.join()) return;
     const currentPage = pages[activeIndex];
     pages = nextPages;
-    const jellyfinButton = document.querySelector('.nav-item[data-target="jellyfin"]');
-    jellyfinButton.hidden = !showJellyfin;
     const nextIndex = pages.indexOf(currentPage);
     if (nextIndex >= 0) {
       activeIndex = nextIndex;
