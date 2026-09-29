@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>LCARS Server Monitor — Development Mock</title>
-  <link rel="stylesheet" href="styles.css?display-config=30-v13">
+  <link rel="stylesheet" href="styles.css?display-config=30-v14">
 </head>
 <body>
   <main class="lcars-shell" aria-live="polite">
@@ -71,7 +71,7 @@
         <div class="epg-grid">
           <article class="panel recording-state"><h2>CURRENT RECORDING</h2><div class="idle-mark"><i></i><b id="recordingState">WAITING FOR API</b></div><p id="recordingDetail">—</p><small id="recordingTime">—</small></article>
           <article class="panel next-recording"><h2>NEXT RECORDING</h2><span class="channel-tag" id="nextChannel">UNAVAILABLE</span><h3 id="nextTitle">WAITING FOR API</h3><p id="nextTime">—</p><div class="reservation-line"><span>RESERVATION STATUS</span><b id="reserveState">UNAVAILABLE</b></div></article>
-          <article class="panel recording-disk"><h2>RECORDING STORAGE</h2><div class="metric-major compact"><strong id="epgDiskPct">—</strong><small>% USED</small></div><div class="bar cyan"><i id="epgDiskBar" style="width:0"></i></div><p id="epgDiskFree">WAITING FOR API</p></article>
+          <article class="panel recording-disk"><h2>RECORDING STORAGE</h2><div class="metric-major compact recording-used"><strong id="epgDiskPct">—</strong><small>% USED</small></div><div class="bar cyan"><i id="epgDiskBar" style="width:0"></i></div><p id="epgDiskFree">WAITING FOR API</p></article>
         </div>
       </section>
 

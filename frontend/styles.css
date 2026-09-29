@@ -17,6 +17,7 @@
 
 /* Distance-reading profile for the 1024 x 600 panel. */
 body { font-family:"DejaVu Sans","Noto Sans CJK JP","Noto Sans CJK SC",sans-serif; font-size:clamp(12px,1.35vw,18px); letter-spacing:.045em; }
+.recording-disk { border-left-color:var(--orange); background:linear-gradient(120deg,#191426,#0b0c16); }.recording-disk h2 { color:var(--peach); font-size:1.25em; letter-spacing:.09em; }.recording-used strong { color:#ffdb7a; font-size:clamp(4.8em,7.2vw,7em); line-height:.9; text-shadow:0 0 16px rgba(255,219,122,.35); }.recording-used small { padding:.35em .55em; color:#22192a; background:var(--orange); font-size:1em; font-weight:900; letter-spacing:.08em; }.recording-disk .bar { height:14px; box-shadow:0 0 10px rgba(92,224,232,.28); }.recording-disk p { color:var(--peach); font-size:.88em; font-weight:700; }
 .warning { font-size:.82em; }.clock { font-size:1.55em; }.status-pill { font-size:.8em; }
 .nav-item { font-size:1.3em; letter-spacing:.02em; line-height:1.15; }.nav-item b { display:inline-block; min-width:1.8em; font-size:1.25em; }
 .heading h1 { font-size:clamp(28px,4.35vw,52px); }.heading > span:last-child { font-size:.8em; }.panel h2 { font-size:1em; }
