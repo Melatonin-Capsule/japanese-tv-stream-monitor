@@ -3,7 +3,7 @@
   const configuredRotation = Number(window.LCARS_CONFIG?.PAGE_ROTATION_SECONDS);
   const ROTATION_SECONDS = Number.isFinite(configuredRotation) && configuredRotation >= 5
     ? configuredRotation
-    : 15;
+    : 30;
   const pages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
   let activeIndex = 0;
   let secondsLeft = ROTATION_SECONDS;
@@ -11,6 +11,7 @@
 
   const byId = (id) => document.getElementById(id);
   const pad = (number) => String(number).padStart(2, '0');
+  const temperatureClass = (value) => value >= 80 ? 'temperature-high' : value >= 60 ? 'temperature-medium' : 'temperature-low';
 
   function updateClock() {
     const now = new Date();
@@ -43,20 +44,26 @@
     coreBars.innerHTML = cores.map((value, index) => `<div><small>C${index}</small><span><i style="height:${value}%"></i></span><b>${value}%</b></div>`).join('') || 'NO CPU SAMPLE';
     byId('cpuTotal').textContent = data.cpu_percent ?? 'N/A';
     byId('cpuTemp').textContent = data.temperature_c == null ? 'N/A' : `${data.temperature_c.toFixed(1)}°C`;
+    const packageTemperature = Number(data.temperature_c);
+    const packageTempElement = byId('cpuPackageTemp');
+    packageTempElement.textContent = Number.isFinite(packageTemperature) ? `${packageTemperature.toFixed(1)}°C` : 'N/A';
+    packageTempElement.className = Number.isFinite(packageTemperature) ? temperatureClass(packageTemperature) : '';
+    const temperatures = data.core_temperatures || [];
+    byId('coreTemperatureBars').innerHTML = temperatures.map((reading) => {
+      const value = Number(reading.temperature_c);
+      const height = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+      const level = Number.isFinite(value) ? temperatureClass(value) : '';
+      return `<div><small>${reading.label}</small><span><i class="${level}" style="height:${height}%"></i></span><b class="${level}">${Number.isFinite(value) ? `${value.toFixed(0)}°` : '—'}</b></div>`;
+    }).join('') || '<span class="core-temperature-unavailable">SENSOR UNAVAILABLE</span>';
     byId('loadAvg').textContent = (data.load || []).join(' / ') || 'N/A';
     const m = data.memory || {}; byId('memUsed').textContent = bytes(m.used); byId('memAvail').textContent = bytes(m.available); byId('memPct').textContent = `${m.percent ?? 'N/A'}%`; byId('memBar').style.width = `${m.percent || 0}%`;
     byId('netRx').textContent = rate(data.network?.rx); byId('netTx').textContent = rate(data.network?.tx);
     renderNetworkGraph(data.network?.rx, data.network?.tx);
     setDisk('rootDisk', 'rootDiskBar', data.storage?.root); setDisk('recordDisk', 'recordDiskBar', data.storage?.recording);
-    if (Object.hasOwn(data, 'current_playback')) {
-      const playback = data.current_playback; const logo = byId('nowPlayingLogo');
-      byId('nowPlayingState').textContent = playback?.state || 'JELLYFIN STATUS'; byId('nowPlayingTitle').textContent = playback?.channel || 'NO ACTIVE PLAYBACK'; byId('nowPlayingClient').textContent = playback ? `${playback.user} · ${playback.client}` : '—';
-      if (playback?.item_id) { logo.src = `/api/jellyfin-image/${playback.item_id}`; logo.hidden = false; } else { logo.removeAttribute('src'); logo.hidden = true; }
-    }
   }
 
   function renderTuners(data) {
-    byId('tunerGrid').innerHTML = (data.tuners || []).map((tuner) => `<article class="tuner ${tuner.state.toLowerCase()}"><div class="tuner-top"><span>${tuner.types.join(' / ')}</span><b><i></i>${tuner.state}</b></div><h2>${tuner.name}</h2><p>CURRENT CHANNEL</p><strong>${tuner.channel}</strong></article>`).join('') || '<p>CONNECTION LOST</p>';
+    byId('tunerGrid').innerHTML = (data.tuners || []).map((tuner) => `<article class="tuner ${tuner.state.toLowerCase()}"><div class="tuner-top"><span>${tuner.types.join(' / ')}</span><b><i></i>${tuner.state}</b></div><h2>${tuner.name}</h2><div class="tuner-channel">${tuner.logo_service_id ? `<img class="tuner-logo" src="/api/mirakurun-logo/${tuner.logo_service_id}" alt="">` : ''}<div><p>CURRENT CHANNEL</p><strong>${tuner.channel}</strong></div></div></article>`).join('') || '<p>CONNECTION LOST</p>';
   }
 
   const bytes = (value) => value == null ? 'N/A' : `${(value / 1024 ** 3).toFixed(1)} GiB`;

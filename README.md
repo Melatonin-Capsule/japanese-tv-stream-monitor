@@ -20,7 +20,7 @@ A lightweight, local-only server monitor with a Star Trek LCARS-inspired interfa
 SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-默认每页显示 15 秒、完整循环 60 秒。可在 `frontend/config.js` 通过 `PAGE_ROTATION_SECONDS` 调整停留时间。
+默认每页显示 30 秒、完整循环 120 秒。可在 `frontend/config.js` 通过 `PAGE_ROTATION_SECONDS` 调整停留时间。
 
 ### 功能
 
@@ -72,7 +72,7 @@ kiosk 会话会禁用 screensaver 与 DPMS，但不会控制显示器的物理�
 
 **STAR TREK LCARS SERVER MONITOR** は、Ubuntu のテレビ・メディアサーバーに接続した小型 HDMI ディスプレイ向けのローカル専用ステータスモニターです。LCARS をイメージした画面を、ブラウザーの UI を表示しない全画面 kiosk として常時表示します。
 
-`SYSTEM`、`MIRAKURUN`、`EPGSTATION`、`JELLYFIN` の 4 ページを固定順で循環します。標準設定は 1 ページ 15 秒、1 周 60 秒で、`frontend/config.js` の `PAGE_ROTATION_SECONDS` から変更できます。
+`SYSTEM`、`MIRAKURUN`、`EPGSTATION`、`JELLYFIN` の 4 ページを固定順で循環します。標準設定は 1 ページ 30 秒、1 周 120 秒で、`frontend/config.js` の `PAGE_ROTATION_SECONDS` から変更できます。
 
 ### 機能
 
@@ -110,7 +110,7 @@ It rotates through four fixed pages:
 SYSTEM → MIRAKURUN → EPGSTATION → JELLYFIN → SYSTEM
 ```
 
-The default dwell time is 15 seconds per page, or 60 seconds for one full cycle. Set `PAGE_ROTATION_SECONDS` in `frontend/config.js` to change it.
+The default dwell time is 30 seconds per page, or 120 seconds for one full cycle. Set `PAGE_ROTATION_SECONDS` in `frontend/config.js` to change it.
 
 ### Features
 

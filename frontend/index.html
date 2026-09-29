@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>LCARS Server Monitor — Development Mock</title>
-  <link rel="stylesheet" href="styles.css?display-config=30-v12">
+  <link rel="stylesheet" href="styles.css?display-config=30-v13">
 </head>
 <body>
   <main class="lcars-shell" aria-live="polite">
@@ -52,8 +52,9 @@
             <svg class="chart" viewBox="0 0 500 90" preserveAspectRatio="none" aria-label="Mock network graph"><path id="rxPath" class="rx"/><path id="txPath" class="tx"/></svg>
           </article>
           <article class="panel now-playing-panel">
-            <h2>NOW PLAYING</h2>
-            <div class="now-playing"><div class="station-logo"><img id="nowPlayingLogo" alt="Station logo"></div><div><small id="nowPlayingState">JELLYFIN STATUS</small><b id="nowPlayingTitle">NO ACTIVE PLAYBACK</b><span id="nowPlayingClient">—</span></div></div>
+            <h2>CPU CORE TEMPERATURES</h2>
+            <div class="core-temperature-summary"><b id="cpuPackageTemp">—</b><span>PACKAGE</span></div>
+            <div class="core-temperature-bars" id="coreTemperatureBars"></div>
           </article>
         </div>
       </section>
@@ -77,11 +78,11 @@
       <section class="view" id="jellyfin" data-page="JELLYFIN">
         <div class="heading"><span class="index">04</span><h1>JELLYFIN</h1><span>SESSION MONITOR</span></div>
         <div class="service-summary"><div><small>SERVER</small><b id="jellyStatus">WAITING</b></div><div><small>LAST UPDATE</small><b id="jellyUpdate">—</b></div><div><small>ACTIVE SESSIONS</small><b id="sessionCount">—</b></div></div>
-        <article class="panel session-card"><div class="play-state"><i></i> <span id="playState">UNAVAILABLE</span></div><div class="media-art">LCARS<br>MEDIA</div><div class="media-data"><small>USER / DEVICE</small><h2 id="sessionUser">WAITING FOR API</h2><small>NOW PLAYING</small><h3 id="sessionTitle">UNAVAILABLE</h3><p id="sessionClient">—</p><div class="progress"><i id="sessionProgress" style="width:0"></i></div><div class="time-row"><span id="sessionElapsed">—</span><span id="sessionTotal">—</span></div></div></article>
+        <article class="panel session-card"><div class="play-state"><i></i> <span id="playState">UNAVAILABLE</span></div><div class="media-data"><small>USER / DEVICE</small><h2 id="sessionUser">WAITING FOR API</h2><small>NOW PLAYING</small><h3 id="sessionTitle">UNAVAILABLE</h3><p id="sessionClient">—</p><div class="progress"><i id="sessionProgress" style="width:0"></i></div><div class="time-row"><span id="sessionElapsed">—</span><span id="sessionTotal">—</span></div></div></article>
         <p class="session-note" id="jellyNote">A restricted server-side API key is required for session monitoring.</p>
       </section>
 
-      <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">15</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
+      <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">30</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
     </section>
   </main>
     <script src="config.js?display-config=30-v12"></script>

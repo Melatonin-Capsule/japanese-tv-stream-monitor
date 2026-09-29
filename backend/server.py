@@ -111,6 +111,22 @@ def temperature() -> float | None:
     return fallback
 
 
+def core_temperatures() -> list[dict]:
+    readings = []
+    for sensor in Path("/sys/class/hwmon").glob("hwmon*"):
+        try:
+            if (sensor / "name").read_text().strip() != "coretemp":
+                continue
+            for source in sensor.glob("temp*_input"):
+                label = source.with_name(source.name.replace("_input", "_label"))
+                label_text = label.read_text().strip() if label.exists() else ""
+                if label_text.startswith("Core "):
+                    readings.append({"label": label_text, "temperature_c": int(source.read_text().strip()) / 1000})
+        except (OSError, ValueError):
+            continue
+    return sorted(readings, key=lambda reading: reading["label"])
+
+
 def lan_ip() -> str | None:
     probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -129,7 +145,7 @@ def system_data() -> dict:
         return {"status": "ONLINE", "last_update": now(), "hostname": socket.gethostname(),
                 "ip": lan_ip(), "kernel": platform.release(), "load": [round(n, 2) for n in os.getloadavg()],
                 "uptime_seconds": int(uptime), "cpu_percent": cores[0] if cores else None,
-                "cores": cores, "temperature_c": temperature(), "memory": memory(),
+                "cores": cores, "temperature_c": temperature(), "core_temperatures": core_temperatures(), "memory": memory(),
                 "storage": {"root": disk("/"), "recording": disk("/media/tv_record") if Path("/media/tv_record").is_mount() else None},
                 "network": network()}
     except Exception as error:
@@ -140,6 +156,11 @@ def mirakurun_data() -> dict:
     try:
         tuners = get_json("http://127.0.0.1:40772/api/tuners")
         status = get_json("http://127.0.0.1:40772/api/status")
+        services = get_json("http://127.0.0.1:40772/api/services")
+        services_by_network_and_sid = {
+            (service.get("networkId"), service.get("serviceId")): service
+            for service in services
+        }
         result = []
         for tuner in tuners:
             # Mirakurun 4.x reports a live reservation in ``isUsing`` and
@@ -151,12 +172,15 @@ def mirakurun_data() -> dict:
             channel = stream.get("channel", {})
             channel_name = channel.get("name")
             channel_number = channel.get("channel")
-            display_channel = channel_name or channel_number or "UNAVAILABLE"
-            if channel_name and channel_number and channel_number not in channel_name:
+            service = services_by_network_and_sid.get((stream.get("networkId"), stream.get("serviceId")))
+            service_name = service.get("name") if service else None
+            display_channel = service_name or channel_name or channel_number or "UNAVAILABLE"
+            if not service_name and channel_name and channel_number and channel_number not in channel_name:
                 display_channel = f"{channel_name} ({channel_number})"
             result.append({"name": tuner.get("name", "UNNAMED"), "types": tuner.get("types", []),
                            "state": "UNAVAILABLE" if tuner.get("isDisabled") else ("ACTIVE" if tuner.get("isUsing") else "IDLE"),
-                           "channel": display_channel})
+                           "channel": display_channel,
+                           "logo_service_id": service.get("id") if service and service.get("hasLogoData") else None})
         return {"status": "ONLINE", "last_update": now(), "version": status.get("version"),
                 "stream_count": status.get("streamCount"), "tuners": result}
     except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError) as error:
@@ -169,12 +193,16 @@ def epgstation_data() -> dict:
         channels = get_json(f"{base}/channels")
         names = {channel.get("id"): channel.get("name", "UNAVAILABLE") for channel in channels}
         recording = get_json(f"{base}/recording?isHalfWidth=false").get("records", [])
-        reserves = get_json(f"{base}/reserves?isHalfWidth=false&offset=0&limit=1").get("reserves", [])
+        reserves = get_json(f"{base}/reserves?isHalfWidth=false&offset=0&limit=100").get("reserves", [])
+        current_time = int(time.time() * 1000)
+        next_reserve = next((reserve for reserve in reserves
+                             if not reserve.get("isRecording", False)
+                             and reserve.get("startAt", 0) > current_time), None)
         def normalize(item: dict) -> dict:
             return {"title": item.get("name", "UNAVAILABLE"), "channel": names.get(item.get("channelId"), "UNAVAILABLE"),
                     "start_at": item.get("startAt"), "end_at": item.get("endAt"), "is_recording": item.get("isRecording", False)}
         return {"status": "ONLINE", "last_update": now(), "recordings": [normalize(item) for item in recording],
-                "next_recording": normalize(reserves[0]) if reserves else None,
+                "next_recording": normalize(next_reserve) if next_reserve else None,
                 "storage": disk("/media/tv_record") if Path("/media/tv_record").is_mount() else None}
     except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError) as error:
         return unavailable(str(error))
@@ -215,6 +243,11 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(FRONTEND), **kwargs)
 
+    def end_headers(self):
+        if self.path.split("?", 1)[0] in {"/", "/index.html", "/config.js", "/app.js", "/styles.css"}:
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def do_GET(self):
         if self.path == "/api/status":
             body = json.dumps(snapshot(), ensure_ascii=False).encode()
@@ -238,6 +271,22 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_response(HTTPStatus.OK)
                     self.send_header("Content-Type", response.headers.get_content_type())
                     self.send_header("Cache-Control", "private, max-age=60")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers(); self.wfile.write(body)
+            except (OSError, urllib.error.URLError, urllib.error.HTTPError):
+                self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        match = re.fullmatch(r"/api/mirakurun-logo/(\d{1,12})", self.path)
+        if match:
+            try:
+                with urllib.request.urlopen(
+                    f"http://127.0.0.1:40772/api/services/{match.group(1)}/logo",
+                    timeout=TIMEOUT,
+                ) as response:
+                    body = response.read()
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", response.headers.get_content_type())
+                    self.send_header("Cache-Control", "private, max-age=300")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers(); self.wfile.write(body)
             except (OSError, urllib.error.URLError, urllib.error.HTTPError):
