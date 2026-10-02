@@ -5,6 +5,7 @@
     ? configuredRotation
     : 30;
   const allPages = ['system', 'mirakurun', 'epgstation', 'jellyfin'];
+  const requestedPage = new URLSearchParams(window.location.search).get('page');
   let pages = [...allPages];
   let activeIndex = 0;
   let secondsLeft = ROTATION_SECONDS;
@@ -171,6 +172,7 @@
   }
 
   document.querySelectorAll('.nav-item').forEach((button) => button.addEventListener('click', () => showPage(pages.indexOf(button.dataset.target))));
+  if (allPages.includes(requestedPage)) showPage(pages.indexOf(requestedPage));
   updateClock();
   refresh();
   setInterval(updateClock, 1000);

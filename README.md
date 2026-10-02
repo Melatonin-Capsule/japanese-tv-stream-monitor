@@ -6,6 +6,14 @@
 
 > Illustration only. The image contains fictional, non-sensitive values rather than a capture from a real server.
 
+## Screenshots
+
+| SYSTEM | MIRAKURUN |
+| --- | --- |
+| ![SYSTEM dashboard](assets/screenshots/system.png) | ![MIRAKURUN dashboard](assets/screenshots/mirakurun.png) |
+| EPGSTATION | JELLYFIN |
+| ![EPGSTATION dashboard](assets/screenshots/epgstation.png) | ![JELLYFIN dashboard](assets/screenshots/jellyfin.png) |
+
 A lightweight, local-only server monitor with a Star Trek LCARS-inspired interface. It is intended for a small HDMI display attached to a media/TV server and deliberately remains read-only.
 
 ## 中文
