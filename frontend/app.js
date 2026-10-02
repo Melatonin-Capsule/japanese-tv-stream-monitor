@@ -162,13 +162,17 @@
     document.querySelectorAll('.nav-item').forEach((button) => button.classList.toggle('active', button.dataset.target === page));
     byId('pageName').textContent = page.toUpperCase();
     secondsLeft = ROTATION_SECONDS;
-    byId('countdown').textContent = secondsLeft;
+    const countdown = byId('countdown');
+    if (countdown) countdown.textContent = secondsLeft;
   }
 
   function tick() {
     secondsLeft -= 1;
     if (secondsLeft <= 0) showPage(activeIndex + 1);
-    else byId('countdown').textContent = secondsLeft;
+    else {
+      const countdown = byId('countdown');
+      if (countdown) countdown.textContent = secondsLeft;
+    }
   }
 
   document.querySelectorAll('.nav-item').forEach((button) => button.addEventListener('click', () => showPage(pages.indexOf(button.dataset.target))));
