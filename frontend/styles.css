@@ -295,3 +295,6 @@ body { font-family:"DejaVu Sans","Noto Sans CJK JP","Noto Sans CJK SC",sans-seri
 .cpu-history-chart path { filter:none; }
 .dish-head,.dish-signal-head { animation-timing-function:steps(18, end); }
 .dish-inbound-rings i,.dish-outbound-rings i { animation-timing-function:steps(12, end); }
+
+/* The recording state must be readable from across the room. */
+.recording-indicator { width:94%; padding:1.35vh 1vw; border-radius:0 28px 28px 0; font-size:1.8em; letter-spacing:.09em; text-shadow:0 1px 0 rgba(0,0,0,.35); box-shadow:inset 0 0 0 2px rgba(255,240,240,.32),0 0 14px rgba(201,40,66,.48); }
