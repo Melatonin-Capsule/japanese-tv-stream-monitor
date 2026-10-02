@@ -1,4 +1,4 @@
-# STAR TREK LCARS SERVER MONITOR
+# Japanese TV Stream Monitor
 
 [中文](#中文) · [日本語](#日本語) · [English](#english)
 
