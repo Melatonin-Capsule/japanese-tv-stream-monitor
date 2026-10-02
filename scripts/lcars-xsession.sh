@@ -7,7 +7,7 @@ xset s noblank
 openbox &
 unclutter -idle 0.2 -root &
 # Luakit hides all of its UI chrome automatically while fullscreen.
-luakit --nounique --profile=lcars-monitor 'http://127.0.0.1:8765/?display-config=30-v48' &
+luakit --nounique --profile=lcars-monitor 'http://127.0.0.1:8765/?display-config=30-v49' &
 browser_pid=$!
 # Epiphany creates its window before it is ready to receive keyboard input.
 # Let it finish mapping, then toggle its own kiosk fullscreen mode.
