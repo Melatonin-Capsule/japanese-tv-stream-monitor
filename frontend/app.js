@@ -177,6 +177,5 @@
   refresh();
   setInterval(updateClock, 1000);
   setInterval(tick, 1000);
-  setInterval(refresh, 5000);
-  setInterval(refreshSystem, 2000);
+  setInterval(refresh, 10000);
 })();

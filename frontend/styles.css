@@ -290,3 +290,8 @@ body { font-family:"DejaVu Sans","Noto Sans CJK JP","Noto Sans CJK SC",sans-seri
 .telemetry-dish { margin-left:-26px; }
 .dish-signal-head { left:-26px; right:auto; width:100%; }
 .dish-inbound-rings,.dish-outbound-rings { left:108px; top:-14px; }
+
+/* The HDMI kiosk is CPU-bound: retain motion, but repaint it at LCARS-style steps. */
+.cpu-history-chart path { filter:none; }
+.dish-head,.dish-signal-head { animation-timing-function:steps(18, end); }
+.dish-inbound-rings i,.dish-outbound-rings i { animation-timing-function:steps(12, end); }
