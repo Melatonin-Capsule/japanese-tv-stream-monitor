@@ -39,11 +39,24 @@
     byId('txPath').setAttribute('d', makePath(scale(networkHistory.tx), 0));
   }
 
+  function renderCpuHistory(history) {
+    const points = Array.isArray(history) ? history.filter((point) => Number.isFinite(Number(point.percent))) : [];
+    const step = Math.max(1, Math.ceil(points.length / 180));
+    const visible = points.filter((_, index) => index % step === 0 || index === points.length - 1);
+    const values = visible.map((point) => Math.max(0, Math.min(100, Number(point.percent))));
+    byId('cpuHistoryPath').setAttribute('d', makePath(values, 0));
+    if (points.length > 1) {
+      const seconds = Number(points.at(-1).timestamp) - Number(points[0].timestamp);
+      byId('cpuHistorySpan').textContent = seconds >= 3540 ? 'LAST HOUR' : `${Math.max(1, Math.ceil(seconds / 60))} MIN`;
+    }
+  }
+
   function renderSystem(data) {
     const coreBars = byId('coreBars');
     const cores = data.cores || [];
     coreBars.innerHTML = cores.map((value, index) => `<div><small>C${index}</small><span><i style="height:${value}%"></i></span><b>${value}%</b></div>`).join('') || 'NO CPU SAMPLE';
     byId('cpuTotal').textContent = data.cpu_percent ?? 'N/A';
+    renderCpuHistory(data.cpu_history);
     byId('cpuTemp').textContent = data.temperature_c == null ? 'N/A' : `${data.temperature_c.toFixed(1)}°C`;
     const packageTemperature = Number(data.temperature_c);
     const packageTempElement = byId('cpuPackageTemp');
@@ -60,7 +73,8 @@
     const m = data.memory || {}; byId('memUsed').textContent = bytes(m.used); byId('memAvail').textContent = bytes(m.available); byId('memPct').textContent = `${m.percent ?? 'N/A'}%`; byId('memBar').style.width = `${m.percent || 0}%`;
     byId('netRx').textContent = rate(data.network?.rx); byId('netTx').textContent = rate(data.network?.tx);
     renderNetworkGraph(data.network?.rx, data.network?.tx);
-    setDisk('rootDisk', 'rootDiskBar', data.storage?.root); setDisk('recordDisk', 'recordDiskBar', data.storage?.recording);
+    setDisk('rootDisk', 'rootDiskPct', 'rootDiskBar', data.storage?.root);
+    setDisk('recordDisk', 'recordDiskPct', 'recordDiskBar', data.storage?.recording);
   }
 
   function renderTuners(data) {
@@ -69,7 +83,11 @@
 
   const bytes = (value) => value == null ? 'N/A' : `${(value / 1024 ** 3).toFixed(1)} GiB`;
   const rate = (value) => value == null ? 'SAMPLING…' : value > 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(1)} MB/s` : `${(value / 1024).toFixed(1)} KB/s`;
-  const setDisk = (label, bar, data) => { byId(label).textContent = data ? `${bytes(data.free)} FREE` : 'UNAVAILABLE'; byId(bar).style.width = `${data?.percent || 0}%`; };
+  const setDisk = (label, percent, bar, data) => {
+    byId(label).textContent = data ? `${bytes(data.free)} FREE` : 'UNAVAILABLE';
+    byId(percent).textContent = data ? `${data.percent}%` : '—';
+    byId(bar).style.width = `${data?.percent || 0}%`;
+  };
   const formatTime = (value) => value ? new Date(value).toLocaleString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 'UNAVAILABLE';
   function renderEpg(data) {
     const current = data.recordings?.find((recording) => recording.is_recording) || null; const next = data.next_recording;
@@ -82,7 +100,23 @@
   }
   function renderJellyfin(data) {
     const session = data.sessions?.[0]; byId('jellyStatus').textContent = data.status; byId('jellyUpdate').textContent = data.last_update || '—'; byId('sessionCount').textContent = data.sessions?.length ?? '—';
-    byId('playState').textContent = session?.state || (data.status === 'ONLINE' ? 'NO ACTIVE PLAYBACK' : 'UNAVAILABLE'); byId('sessionUser').textContent = session ? `${session.user} · ${session.device}` : '—'; byId('sessionTitle').textContent = session?.title || '—'; byId('sessionClient').textContent = session?.client || data.error || '—';
+    const jellyfinActive = Boolean(session);
+    byId('railTelemetry').classList.toggle('is-transmitting', jellyfinActive);
+    byId('dishOutboundRings').hidden = !jellyfinActive;
+    byId('playState').textContent = session?.state || (data.status === 'ONLINE' ? 'NO ACTIVE PLAYBACK' : 'UNAVAILABLE'); byId('sessionUser').textContent = session?.user || '—'; byId('sessionDevice').textContent = session?.device || '—'; byId('sessionClient').textContent = session?.client || data.error || '—';
+    byId('sessionContentLabel').textContent = session?.is_live ? 'LIVE PROGRAM' : 'NOW PLAYING'; byId('sessionTitle').textContent = session?.title || '—'; byId('sessionChannel').textContent = session?.is_live ? `LIVE · ${session.channel}` : 'MEDIA PLAYBACK';
+    const artwork = byId('sessionArtwork'); const artworkFallback = byId('sessionArtworkFallback');
+    const artworkUrl = session?.logo_service_id
+      ? `/api/mirakurun-logo/${session.logo_service_id}`
+      : session?.artwork_item_id ? `/api/jellyfin-image/${session.artwork_item_id}` : null;
+    if (artworkUrl) {
+      artwork.src = artworkUrl;
+      artwork.alt = session.is_live ? `${session.channel} logo` : 'Media artwork';
+      artwork.hidden = false; artworkFallback.hidden = true;
+      artwork.onerror = () => { artwork.hidden = true; artworkFallback.hidden = false; };
+    } else {
+      artwork.removeAttribute('src'); artwork.hidden = true; artworkFallback.hidden = false;
+    }
     const hasDuration = Boolean(session?.runtime_ticks); const percent = hasDuration ? Math.round(100 * session.position_ticks / session.runtime_ticks) : null;
     byId('sessionProgress').style.width = `${percent ?? 0}%`; byId('sessionElapsed').textContent = session ? (hasDuration ? `${percent}% ELAPSED` : 'LIVE STREAM') : '—'; byId('sessionTotal').textContent = session ? (hasDuration ? 'TOTAL DURATION' : 'DURATION UNAVAILABLE') : '—'; byId('jellyNote').textContent = data.error || 'SESSION DATA IS READ-ONLY';
   }

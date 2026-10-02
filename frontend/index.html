@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>LCARS Server Monitor — Development Mock</title>
-  <link rel="stylesheet" href="styles.css?display-config=30-v14">
+  <link rel="stylesheet" href="styles.css?display-config=30-v45">
 </head>
 <body>
   <main class="lcars-shell" aria-live="polite">
@@ -19,7 +19,36 @@
         <button data-target="jellyfin" class="nav-item"><b>04</b> JELLYFIN</button>
       </nav>
       <div class="recording-indicator" id="recordingIndicator" hidden>RECORDING</div>
-      <div class="rail-foot">TVSERVER<br><span>LOCAL OPS</span></div>
+      <div class="rail-telemetry" id="railTelemetry" aria-label="Satellite antenna signal monitor">
+        <div class="telemetry-scene">
+          <div class="telemetry-dish" aria-hidden="true">
+            <svg viewBox="0 0 180 140" role="presentation">
+              <g class="dish-receive">
+                <path d="M179 8 Q151 29 179 50" />
+                <path d="M182 3 Q147 29 182 55" />
+                <path d="M185 -2 Q143 29 185 60" />
+              </g>
+              <g class="dish-head">
+                <path class="dish-bowl" d="M45 21 Q101 42 116 104 Q69 115 45 21Z" />
+                <path class="dish-rim" d="M45 21 Q101 42 116 104" />
+                <path class="dish-arm" d="M87 78 L130 33" />
+                <circle class="dish-receiver" cx="134" cy="29" r="6" />
+              </g>
+              <path class="dish-pole" d="M93 108 L93 128" />
+              <path class="dish-brace" d="M93 108 L70 128 M93 108 L116 128" />
+              <path class="dish-base" d="M55 130 H130" />
+              <g class="dish-transmit">
+                <path class="dish-wave wave-one" d="M143 18 Q169 36 165 65" />
+                <path class="dish-wave wave-two" d="M151 8 Q185 34 178 76" />
+              </g>
+            </svg>
+          </div>
+          <div class="dish-signal-head" aria-hidden="true">
+            <div class="dish-inbound-rings"><i></i><i></i><i></i></div>
+            <div class="dish-outbound-rings" id="dishOutboundRings" hidden><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
     </aside>
 
     <section class="display-area">
@@ -29,6 +58,9 @@
           <article class="panel cpu-panel">
             <h2>CPU / THERMALS</h2>
             <div class="metric-major"><strong id="cpuTotal">23</strong><small>% UTILIZATION</small></div>
+            <div class="cpu-history-header"><span>UTILIZATION · LAST HOUR</span><b id="cpuHistorySpan">SAMPLING</b></div>
+            <svg class="cpu-history-chart" viewBox="0 0 500 90" preserveAspectRatio="none" aria-label="CPU utilization over the last hour"><path id="cpuHistoryPath"/></svg>
+            <div class="cpu-history-axis"><span>−60 MIN</span><span>NOW</span></div>
             <div class="core-row" id="coreBars"></div>
             <div class="metric-line"><span>PACKAGE TEMP</span><b id="cpuTemp">44.0°C</b></div>
             <div class="metric-line"><span>LOAD AVG</span><b id="loadAvg">0.53 / 0.39 / 0.31</b></div>
@@ -41,9 +73,9 @@
             <div class="metric-line"><span>SWAP</span><b>0.0 / 4.0 GiB</b></div>
           </article>
           <article class="panel storage-panel">
-            <h2>STORAGE ARRAY</h2>
-            <div class="storage-line"><span>ROOT FS</span><b id="rootDisk">WAITING</b><div class="bar"><i id="rootDiskBar" style="width:0"></i></div></div>
-            <div class="storage-line"><span>TV RECORD</span><b id="recordDisk">WAITING</b><div class="bar cyan"><i id="recordDiskBar" style="width:0"></i></div></div>
+            <h2>STORAGE ARRAY · CAPACITY</h2>
+            <div class="storage-line"><span>ROOT FS</span><b><strong id="rootDiskPct">—</strong><small>USED</small><em id="rootDisk">WAITING</em></b><div class="bar"><i id="rootDiskBar" style="width:0"></i></div></div>
+            <div class="storage-line"><span>TV RECORD</span><b><strong id="recordDiskPct">—</strong><small>USED</small><em id="recordDisk">WAITING</em></b><div class="bar cyan"><i id="recordDiskBar" style="width:0"></i></div></div>
             <small>NFS RECORDING VOLUME · ONLINE</small>
           </article>
           <article class="panel graph-panel">
@@ -78,14 +110,20 @@
       <section class="view" id="jellyfin" data-page="JELLYFIN">
         <div class="heading"><span class="index">04</span><h1>JELLYFIN</h1><span>SESSION MONITOR</span></div>
         <div class="service-summary"><div><small>SERVER</small><b id="jellyStatus">WAITING</b></div><div><small>LAST UPDATE</small><b id="jellyUpdate">—</b></div><div><small>ACTIVE SESSIONS</small><b id="sessionCount">—</b></div></div>
-        <article class="panel session-card"><div class="play-state"><i></i> <span id="playState">UNAVAILABLE</span></div><div class="media-data"><small>USER / DEVICE</small><h2 id="sessionUser">WAITING FOR API</h2><small>NOW PLAYING</small><h3 id="sessionTitle">UNAVAILABLE</h3><p id="sessionClient">—</p><div class="progress"><i id="sessionProgress" style="width:0"></i></div><div class="time-row"><span id="sessionElapsed">—</span><span id="sessionTotal">—</span></div></div></article>
+        <article class="panel session-card">
+          <div class="session-viewer"><div class="play-state"><i></i> <span id="playState">UNAVAILABLE</span></div><div class="session-identity"><small>WATCHING AS</small><h2 id="sessionUser">WAITING FOR API</h2><div class="session-device"><span><small>DEVICE</small><b id="sessionDevice">—</b></span><span><small>CLIENT</small><b id="sessionClient">—</b></span></div></div></div>
+          <div class="session-visual"><img id="sessionArtwork" alt="" hidden><span id="sessionArtworkFallback">NO ARTWORK</span></div>
+          <div class="session-data">
+            <div class="session-program"><small id="sessionContentLabel">NOW PLAYING</small><h3 id="sessionTitle">UNAVAILABLE</h3><p id="sessionChannel">—</p><div class="progress"><i id="sessionProgress" style="width:0"></i></div><div class="time-row"><span id="sessionElapsed">—</span><span id="sessionTotal">—</span></div></div>
+          </div>
+        </article>
         <p class="session-note" id="jellyNote">A restricted server-side API key is required for session monitoring.</p>
       </section>
 
       <footer class="footer"><span id="pageName">SYSTEM</span><span>NEXT DISPLAY IN <b id="countdown">30</b> SECONDS</span><span>LCARS MONITOR / V0.1</span></footer>
     </section>
   </main>
-    <script src="config.js?display-config=30-v12"></script>
-    <script src="app.js?display-config=30-v13"></script>
+    <script src="config.js?display-config=30-v24"></script>
+  <script src="app.js?display-config=30-v45"></script>
 </body>
 </html>

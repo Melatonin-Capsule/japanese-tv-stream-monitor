@@ -10,6 +10,8 @@ import time
 import urllib.error
 import urllib.request
 import re
+import threading
+from collections import deque
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -22,6 +24,9 @@ JELLYFIN_URL = os.getenv("JELLYFIN_URL", "http://127.0.0.1:8096").rstrip("/")
 JELLYFIN_API_KEY = os.getenv("JELLYFIN_API_KEY", "")
 previous_cpu: list[tuple[int, int]] | None = None
 previous_net: tuple[float, int, int] | None = None
+cpu_history: deque[tuple[int, float]] = deque()
+cpu_lock = threading.Lock()
+CPU_HISTORY_SECONDS = 60 * 60
 
 
 def now() -> str:
@@ -38,7 +43,7 @@ def get_json(url: str, headers: dict | None = None) -> object:
         return json.load(response)
 
 
-def cpu_snapshot() -> list[float]:
+def cpu_snapshot() -> tuple[float | None, list[float], list[dict[str, float]]]:
     global previous_cpu
     lines = Path("/proc/stat").read_text().splitlines()
     samples = []
@@ -50,11 +55,20 @@ def cpu_snapshot() -> list[float]:
         samples.append((total, idle))
     result = []
     if previous_cpu:
-        for (total, idle), (old_total, old_idle) in zip(samples[1:], previous_cpu[1:]):
+        for (total, idle), (old_total, old_idle) in zip(samples, previous_cpu):
             total_delta, idle_delta = total - old_total, idle - old_idle
             result.append(round(100 * (1 - idle_delta / total_delta), 1) if total_delta else 0)
     previous_cpu = samples
-    return result
+    total, cores = (result[0], result[1:]) if result else (None, [])
+    stamp = int(time.time())
+    with cpu_lock:
+        if total is not None:
+            cpu_history.append((stamp, total))
+        cutoff = stamp - CPU_HISTORY_SECONDS
+        while cpu_history and cpu_history[0][0] < cutoff:
+            cpu_history.popleft()
+        history = [{"timestamp": point, "percent": value} for point, value in cpu_history]
+    return total, cores, history
 
 
 def memory() -> dict:
@@ -140,11 +154,11 @@ def lan_ip() -> str | None:
 
 def system_data() -> dict:
     try:
-        cores = cpu_snapshot()
+        cpu_percent, cores, history = cpu_snapshot()
         uptime = float(Path("/proc/uptime").read_text().split()[0])
         return {"status": "ONLINE", "last_update": now(), "hostname": socket.gethostname(),
                 "ip": lan_ip(), "kernel": platform.release(), "load": [round(n, 2) for n in os.getloadavg()],
-                "uptime_seconds": int(uptime), "cpu_percent": cores[0] if cores else None,
+                "uptime_seconds": int(uptime), "cpu_percent": cpu_percent, "cpu_history": history,
                 "cores": cores, "temperature_c": temperature(), "core_temperatures": core_temperatures(), "memory": memory(),
                 "storage": {"root": disk("/"), "recording": disk("/media/tv_record") if Path("/media/tv_record").is_mount() else None},
                 "network": network()}
@@ -214,16 +228,29 @@ def jellyfin_data() -> dict:
     try:
         headers = {"X-Emby-Token": JELLYFIN_API_KEY}
         sessions = get_json(f"{JELLYFIN_URL}/Sessions", headers)
+        try:
+            mirakurun_logo_ids = {
+                service.get("name"): service.get("id")
+                for service in get_json("http://127.0.0.1:40772/api/services")
+                if service.get("hasLogoData")
+            }
+        except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError):
+            mirakurun_logo_ids = {}
         active = []
         for session in sessions:
             state = session.get("PlayState") or {}
             now_playing = session.get("NowPlayingItem")
             if not now_playing:
                 continue
+            item_type = now_playing.get("Type", "")
+            is_live = bool(now_playing.get("IsLive")) or bool(now_playing.get("ChannelId")) or item_type in {"LiveTvProgram", "TvChannel"}
+            channel_id = now_playing.get("ChannelId")
+            artwork_item_id = channel_id if is_live and channel_id else now_playing.get("Id")
+            channel_name = now_playing.get("ChannelName") or now_playing.get("Name", "UNAVAILABLE")
             active.append({"user": session.get("UserName", "UNAVAILABLE"), "device": session.get("DeviceName", "UNAVAILABLE"),
                            "client": session.get("Client", "UNAVAILABLE"), "title": now_playing.get("Name", "UNAVAILABLE"),
-                           "channel": now_playing.get("ChannelName") or now_playing.get("Name", "UNAVAILABLE"),
-                           "item_id": now_playing.get("Id"),
+                           "channel": channel_name, "logo_service_id": mirakurun_logo_ids.get(channel_name) if is_live else None,
+                           "is_live": is_live, "artwork_item_id": artwork_item_id,
                            "state": "PAUSED" if state.get("IsPaused") else "PLAYING",
                            "position_ticks": state.get("PositionTicks"), "runtime_ticks": now_playing.get("RunTimeTicks")})
         return {"status": "ONLINE", "last_update": now(), "sessions": active}
@@ -263,7 +290,7 @@ class Handler(SimpleHTTPRequestHandler):
         if match and JELLYFIN_API_KEY:
             try:
                 request = urllib.request.Request(
-                    f"{JELLYFIN_URL}/Items/{match.group(1)}/Images/Primary?maxWidth=180",
+                    f"{JELLYFIN_URL}/Items/{match.group(1)}/Images/Primary?maxWidth=260",
                     headers={"X-Emby-Token": JELLYFIN_API_KEY},
                 )
                 with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
