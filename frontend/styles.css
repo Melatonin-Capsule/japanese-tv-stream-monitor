@@ -301,4 +301,4 @@ body { font-family:"DejaVu Sans","Noto Sans CJK JP","Noto Sans CJK SC",sans-seri
 
 /* Global recording alert: prominent without competing with the navigation rail. */
 .recording-indicator { position:fixed; top:1.35vh; right:1.7vw; z-index:20; width:clamp(150px,16vw,200px); margin:0; padding:1.2vh .8vw; border-radius:24px 0 24px 24px; text-align:center; }
-.recording-indicator { display:flex; align-items:center; justify-content:center; min-height:42px; line-height:1; overflow:hidden; }
+.recording-indicator { display:flex; align-items:center; justify-content:center; width:clamp(230px,28vw,300px); right:0; padding:1.2vh 1.4vw; min-height:42px; line-height:1; overflow:visible; }

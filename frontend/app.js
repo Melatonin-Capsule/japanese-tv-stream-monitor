@@ -160,7 +160,8 @@
     const page = pages[activeIndex];
     document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === page));
     document.querySelectorAll('.nav-item').forEach((button) => button.classList.toggle('active', button.dataset.target === page));
-    byId('pageName').textContent = page.toUpperCase();
+    const pageName = byId('pageName');
+    if (pageName) pageName.textContent = page.toUpperCase();
     secondsLeft = ROTATION_SECONDS;
     const countdown = byId('countdown');
     if (countdown) countdown.textContent = secondsLeft;
